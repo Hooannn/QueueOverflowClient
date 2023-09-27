@@ -1,17 +1,17 @@
-import { createSlice } from "@reduxjs/toolkit";
-import type { User } from "../types";
+import { createSlice } from '@reduxjs/toolkit';
+import type { IUser } from '../types';
 
 export interface AuthState {
   isLogged: boolean;
-  user: User;
+  user: IUser;
 }
 
 const initialState: Partial<AuthState> = {};
 export const authSlice = createSlice({
-  name: "auth",
+  name: 'auth',
   initialState,
   reducers: {
-    setUser: (state, { payload }: { payload: User }) => {
+    setUser: (state, { payload }: { payload: IUser }) => {
       state.user = payload;
     },
     setLogged: (state, { payload }: { payload: boolean }) => {

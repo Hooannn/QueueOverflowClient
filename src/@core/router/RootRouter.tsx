@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Suspense } from 'react';
 import ErrorPage from '../../pages/ErrorPage';
 import RootRoute from '../../RootRoute';

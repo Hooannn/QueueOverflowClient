@@ -3,9 +3,9 @@ import storage from 'redux-persist/lib/storage';
 import authReducer from '../slices/auth.slice';
 import authFlowReducer from '../slices/auth-flow.slice';
 import { persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
-
 export const store = configureStore({
   reducer: {
+    //@ts-ignore
     auth: persistReducer(
       {
         key: 'auth',

@@ -8,12 +8,16 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import useAuth from '../../services/auth';
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
+  isLoading?: boolean;
+  onFinished: () => void;
+}
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  const { checkUser } = useAuth();
+  const { email, updateEmail } = useAuth();
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
+    props.onFinished();
   }
 
   return (
@@ -26,16 +30,21 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             </Label>
             <Input
               id="email"
+              value={email}
+              onChange={e => {
+                e.preventDefault();
+                updateEmail(e.target.value);
+              }}
               placeholder="name@example.com"
               type="email"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect="off"
-              disabled={checkUser.isLoading}
+              disabled={props.isLoading}
             />
           </div>
-          <Button disabled={checkUser.isLoading}>
-            {checkUser.isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+          <Button disabled={props.isLoading}>
+            {props.isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
             Submit
           </Button>
         </div>
@@ -48,8 +57,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
-      <Button variant="outline" type="button" disabled={checkUser.isLoading}>
-        {checkUser.isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" /> : <Icons.gitHub className="mr-2 h-4 w-4" />} Github
+      <Button variant="outline" type="button" disabled={props.isLoading}>
+        {props.isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" /> : <Icons.gitHub className="mr-2 h-4 w-4" />} Github
       </Button>
     </div>
   );

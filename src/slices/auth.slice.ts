@@ -1,12 +1,16 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { IUser } from '../types';
+import cookies from '../libs/cookies';
 
 export interface AuthState {
   isLogged: boolean;
-  user: IUser;
+  user: IUser | null;
 }
 
-const initialState: Partial<AuthState> = {};
+const initialState: Partial<AuthState> = {
+  isLogged: false,
+  user: null,
+};
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -17,9 +21,14 @@ export const authSlice = createSlice({
     setLogged: (state, { payload }: { payload: boolean }) => {
       state.isLogged = payload;
     },
+    signOut: () => {
+      cookies.remove('access_token', { path: '/' });
+      cookies.remove('refresh_token', { path: '/' });
+      return initialState;
+    },
   },
 });
 
-export const { setUser, setLogged } = authSlice.actions;
+export const { setUser, setLogged, signOut } = authSlice.actions;
 
 export default authSlice.reducer;

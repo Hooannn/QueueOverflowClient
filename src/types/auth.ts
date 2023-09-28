@@ -1,5 +1,14 @@
-export interface IUser {
-  role: IRole;
+export enum Role {
+  Admin = 'admin',
+  User = 'user',
 }
 
-type IRole = 'User' | 'Admin' | 'SuperAdmin';
+export interface IUser {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  roles: Role[];
+  avatar?: string;
+  password?: string;
+}

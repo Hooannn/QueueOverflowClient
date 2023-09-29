@@ -22,9 +22,10 @@ const usePlaid = () => {
   });
 
   const exchangePublicToken = useMutation({
-    mutationFn: (publicToken: string) => {
+    mutationFn: (params: { publicToken: string; accounts: any[] }) => {
       return axios.post<IResponseData<any>>(`/plaid/set_access_token`, {
-        public_token: publicToken,
+        public_token: params.publicToken,
+        accounts: params.accounts,
       });
     },
     onSuccess: data => {},

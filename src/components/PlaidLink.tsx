@@ -11,7 +11,7 @@ const Link = () => {
 
   const onSuccess = async (public_token: string, metadata: any) => {
     console.log('res from linked account', { public_token, metadata });
-    const res = await exchangePublicToken.mutateAsync(public_token);
+    const res = await exchangePublicToken.mutateAsync({ publicToken: public_token, accounts: metadata.accounts });
     console.log('res from exchangePublicToken', res.data);
   };
 

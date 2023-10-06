@@ -11,6 +11,7 @@ import useAuth from '../../services/auth';
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
   isLoading?: boolean;
   onFinished: () => void;
+  onGithubBtnClicked: () => void;
 }
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
@@ -57,7 +58,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
-      <Button variant="outline" type="button" disabled={props.isLoading}>
+      <Button onClick={() => props.onGithubBtnClicked()} variant="outline" type="button" disabled={props.isLoading}>
         {props.isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" /> : <Icons.gitHub className="mr-2 h-4 w-4" />} Github
       </Button>
     </div>

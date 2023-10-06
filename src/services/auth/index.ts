@@ -142,6 +142,14 @@ const useAuth = () => {
     },
   });
 
+  const signInWithGithubMutation = useMutation({
+    mutationFn: () => axios.get<IResponseData<any>>('/auth/github'),
+    onError: onError,
+    onSuccess: res => {
+      toast(res.data.message, toastConfig('success'));
+    },
+  });
+
   return {
     checkUser,
     signInMutation,
@@ -154,6 +162,7 @@ const useAuth = () => {
     authType,
     setShowPasscodeModal,
     renewPassword,
+    signInWithGithubMutation,
   };
 };
 

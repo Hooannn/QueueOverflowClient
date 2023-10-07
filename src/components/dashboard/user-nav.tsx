@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../../components/ui/dropdown-menu';
 import { RootState } from '../../@core/store';
 import { useMemo } from 'react';
+import { signOut } from '../../slices/auth.slice';
 
 export function UserNav() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -22,6 +23,7 @@ export function UserNav() {
     return `${user?.first_name} ${user?.last_name}`;
   }, [user]);
 
+  const dispatch = useDispatch();
   const shortName = name[0] + name[1];
   return (
     <DropdownMenu>
@@ -57,7 +59,7 @@ export function UserNav() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => dispatch(signOut())}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

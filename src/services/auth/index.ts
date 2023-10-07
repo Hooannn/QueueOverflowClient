@@ -143,10 +143,15 @@ const useAuth = () => {
   });
 
   const signInWithGithubMutation = useMutation({
-    mutationFn: () => axios.get<IResponseData<any>>('/auth/github'),
+    mutationFn: (code: string) => axios.post<IResponseData<any>>('/auth/github', { code }),
     onError: onError,
     onSuccess: res => {
       toast(res.data.message, toastConfig('success'));
+      const data = res.data?.data;
+      const user = data?.user;
+      const accessToken = data?.credentials?.access_token;
+      const refreshToken = data?.credentials?.refresh_token;
+      saveCredentialsAndRedirect(user, accessToken, refreshToken);
     },
   });
 

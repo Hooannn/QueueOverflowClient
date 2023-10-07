@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import useAuth from '../../services/auth';
 import { AuthFlowType } from '../../slices/auth-flow.slice';
 import PasscodeDialog from './PasscodeDialog';
 import { UserAuthForm } from './UserAuthForm';
-
+import { useSearchParams } from 'react-router-dom';
 export default function AuthenticationPage() {
   const { checkUser, shouldShowPasscodeModal, setShowPasscodeModal, authType, signInMutation, signUpMutation, signInWithGithubMutation } = useAuth();
   const onFinished = (isRenewPassword: boolean) => {
@@ -15,6 +16,17 @@ export default function AuthenticationPage() {
         break;
     }
   };
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const githubCode = searchParams.get('code');
+
+  useEffect(() => {
+    if (githubCode) {
+      signInWithGithubMutation.mutate(githubCode);
+      searchParams.delete('code');
+      setSearchParams(searchParams);
+    }
+  }, [githubCode]);
 
   return (
     <>
@@ -68,7 +80,7 @@ export default function AuthenticationPage() {
                   checkUser.mutateAsync();
                 }}
                 onGithubBtnClicked={() => window.location.assign('https://github.com/login/oauth/authorize?client_id=Iv1.98f469e0d7ac7fd6')}
-                isLoading={checkUser.isLoading}
+                isLoading={checkUser.isLoading || signInWithGithubMutation.isLoading}
               />
               <p className="px-8 text-center text-sm text-muted-foreground">
                 By clicking continue, you agree to our{' '}

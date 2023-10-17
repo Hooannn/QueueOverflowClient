@@ -1,7 +1,7 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useState } from 'react';
 import toastConfig from '../configs/toast';
 import * as firebase from 'firebase/app';
-import { Messaging, getMessaging, getToken } from 'firebase/messaging';
+import { Messaging, getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../@core/store';
@@ -31,6 +31,10 @@ export const FirebaseProvider = ({ children, config }: PropsWithChildren<{ confi
   useEffect(() => {
     if (!isLogged || !firebaseApp) return;
     const messaging = getMessaging(firebaseApp);
+    onMessage(messaging, payload => {
+      console.log('Message received. ', payload);
+      // ...
+    });
     getToken(messaging, { vapidKey: 'BOO_V42pfMSOmGKaXoKqnUbGL1KdD9p4p7Xw3cyhCj6kH4xxn6BWiD7ZdmRsXJ-Av6iYzdWEHu6efV7NHb6Yvk0' })
       .then(token => {
         setFcmToken(token);

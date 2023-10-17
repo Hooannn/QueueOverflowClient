@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
@@ -10,13 +9,12 @@ import dayjs from '../libs/dayjs';
 
 const useRefreshToken = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleError = () => {
     toast(t('login session expired, please login again'), toastConfig('info'));
     dispatch(signOut());
-    navigate('/auth');
+    window.location.href = '/auth';
   };
 
   const refreshToken = async () =>

@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import storage from 'redux-persist/lib/storage';
 import authReducer from '../slices/auth.slice';
+import appReducer from '../slices/app.slice';
 import authFlowReducer from '../slices/auth-flow.slice';
 import { persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 export const store = configureStore({
@@ -13,6 +14,15 @@ export const store = configureStore({
         storage,
       },
       authReducer,
+    ),
+    //@ts-ignore
+    app: persistReducer(
+      {
+        key: 'app',
+        version: 1,
+        storage,
+      },
+      appReducer,
     ),
     authFlow: authFlowReducer,
   },

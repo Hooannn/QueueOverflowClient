@@ -4,6 +4,7 @@ import ErrorPage from '../../pages/ErrorPage';
 import RootRoute from '../../RootRoute';
 import PrivateRoute from '../../components/PrivateRoute';
 import MainLayout from '../../components/MainLayout';
+
 const rootRouter = [
   {
     path: '/',

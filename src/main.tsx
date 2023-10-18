@@ -10,6 +10,7 @@ import { persistStore } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { FirebaseProvider } from './contexts/FirebaseContext';
+import { SocketProvider } from './contexts/SocketContext';
 import type { FirebaseOptions } from 'firebase/app';
 
 const isDev = import.meta.env.VITE_NODE_ENV === 'dev';
@@ -30,7 +31,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <PersistGate loading={null} persistor={persistor}>
       <QueryClientProvider client={queryClient}>
         <FirebaseProvider config={firebaseConfig}>
-          <RouterProvider router={getRouter(isDev)}></RouterProvider>
+          <SocketProvider socketUrl={import.meta.env.VITE_SOCKET_ENDPOINT}>
+            <RouterProvider router={getRouter(isDev)}></RouterProvider>
+          </SocketProvider>
         </FirebaseProvider>
       </QueryClientProvider>
     </PersistGate>

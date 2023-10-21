@@ -1,7 +1,3 @@
-'use client';
-
-import * as React from 'react';
-
 import { cn } from '../../utils';
 import { Icons } from '../../components/icons';
 import { Button } from '../../components/ui/button';

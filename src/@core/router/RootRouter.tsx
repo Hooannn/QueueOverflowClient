@@ -1,9 +1,12 @@
 //@ts-nocheck
 import { Suspense } from 'react';
 import ErrorPage from '../../pages/ErrorPage';
-import RootRoute from '../../RootRoute';
 import PrivateRoute from '../../components/PrivateRoute';
 import MainLayout from '../../components/MainLayout';
+import DashboardPage from '../../pages/DashboardPage';
+import NotificationsPage from '../../pages/NotificationsPage';
+import ExplorePage from '../../pages/ExplorePage';
+import SettingsPage from '../../pages/SettingsPage';
 
 const rootRouter = [
   {
@@ -18,7 +21,19 @@ const rootRouter = [
     children: [
       {
         path: '/',
-        element: <RootRoute />,
+        element: <DashboardPage />,
+      },
+      {
+        path: '/notifications',
+        element: <NotificationsPage />,
+      },
+      {
+        path: '/explore',
+        element: <ExplorePage />,
+      },
+      {
+        path: '/settings',
+        element: <SettingsPage />,
       },
     ],
     errorElement: <ErrorPage />,

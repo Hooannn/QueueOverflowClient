@@ -28,6 +28,9 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
 
   return (
     <nav className={cn('flex items-center space-x-4 lg:space-x-6', className)} {...props}>
+      <div onClick={() => navigate('/')} className="h-12 hover:bg-slate-100 p-2 rounded-lg cursor-pointer transition">
+        <img src="/logo-full.png" className="object-contain h-full" />
+      </div>
       {ROUTES.map(route => (
         <a
           key={route.path}

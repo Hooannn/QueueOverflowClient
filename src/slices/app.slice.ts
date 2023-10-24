@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { Creator } from '../services/posts';
 import { Follower, Following } from '../services/users';
+import { Subscription } from '../services/subscriptions';
 
 export type DashboardContext = 'best' | 'hot' | 'new' | 'top';
 export interface AppState {
@@ -8,6 +8,7 @@ export interface AppState {
   dashboardContext: DashboardContext;
   following: Following[];
   followers: Follower[];
+  subscriptions: Subscription[];
 }
 
 const initialState: AppState = {
@@ -15,6 +16,7 @@ const initialState: AppState = {
   dashboardContext: 'best',
   following: [],
   followers: [],
+  subscriptions: [],
 };
 export const appSlice = createSlice({
   name: 'app',
@@ -32,9 +34,12 @@ export const appSlice = createSlice({
     setFollowers: (state, { payload }: { payload: Follower[] }) => {
       state.followers = payload;
     },
+    setSubscriptions: (state, { payload }: { payload: Subscription[] }) => {
+      state.subscriptions = payload;
+    },
   },
 });
 
-export const { setFcmToken, setDashboardContext, setFollowing, setFollowers } = appSlice.actions;
+export const { setSubscriptions, setFcmToken, setDashboardContext, setFollowing, setFollowers } = appSlice.actions;
 
 export default appSlice.reducer;

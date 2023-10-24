@@ -32,10 +32,6 @@ export function SocketProvider({ children, socketUrl }: PropsWithChildren<{ sock
         },
       });
 
-      newSocket.on('new-notification', data => {
-        console.log('new notification', data);
-      });
-
       setSocket(newSocket);
     }
 

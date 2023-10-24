@@ -28,7 +28,9 @@ export default function PasscodeDialog(props: PasscodeDialogProps) {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Enter your passcode</DialogTitle>
-          <DialogDescription>A passcode with 6-digits was sent to your registered email</DialogDescription>
+          <DialogDescription>
+            {isSigningIn ? 'A passcode with 6-digits' : 'A passcode with 6-digits was sent to your registered email'}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid py-2">
           <Input
@@ -36,7 +38,7 @@ export default function PasscodeDialog(props: PasscodeDialogProps) {
             value={passcode}
             onChange={e => updatePasscode(e.target.value)}
             placeholder="000000"
-            type="number"
+            type="password"
             disabled={props.isLoading}
             className="col-span-3 h-14 text-3xl"
           />
@@ -45,6 +47,7 @@ export default function PasscodeDialog(props: PasscodeDialogProps) {
           {isSigningIn && (
             <Button
               variant={'secondary'}
+              size="lg"
               disabled={renewPassword.isLoading}
               onClick={e => {
                 e.preventDefault();
@@ -58,6 +61,7 @@ export default function PasscodeDialog(props: PasscodeDialogProps) {
             </Button>
           )}
           <Button
+            size="lg"
             disabled={props.isLoading}
             onClick={e => {
               e.preventDefault();

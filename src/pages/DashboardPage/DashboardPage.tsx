@@ -7,9 +7,16 @@ import PostCard from './PostCard';
 
 export default function DashboardPage() {
   const dashboardContext = useSelector((state: RootState) => state.app.dashboardContext);
-  const { getPostsQuery } = usePosts();
+  const { getPostMutation, posts } = usePosts();
 
-  const posts = getPostsQuery.data?.data?.data;
+  const refetchPostAt = async (postId: string) => {
+    const res = await getPostMutation.mutateAsync(postId);
+    const updatedPost = res.data.data;
+    const index = posts?.findIndex(post => post.id === updatedPost.id);
+    if (posts?.length && index !== undefined) {
+      posts[index] = updatedPost;
+    }
+  };
 
   useEffect(() => {
     console.log(dashboardContext);
@@ -20,9 +27,9 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <ContextSelect />
       </div>
-      <div>
+      <div className="flex flex-col gap-4">
         {posts?.map(post => (
-          <PostCard post={post} key={post.id} />
+          <PostCard post={post} key={post.id} refetchPostAt={refetchPostAt} />
         ))}
       </div>
     </div>

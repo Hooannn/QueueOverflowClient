@@ -36,11 +36,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               type="email"
               autoCapitalize="none"
               autoComplete="email"
+              className="h-10"
               autoCorrect="off"
               disabled={props.isLoading}
             />
           </div>
-          <Button disabled={props.isLoading}>
+          <Button size="lg" disabled={props.isLoading}>
             {props.isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
             Submit
           </Button>
@@ -54,7 +55,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
-      <Button onClick={() => props.onGithubBtnClicked()} variant="outline" type="button" disabled={props.isLoading}>
+      <Button size="lg" onClick={() => props.onGithubBtnClicked()} variant="outline" type="button" disabled={props.isLoading}>
         {props.isLoading ? <Icons.spinner className="mr-2 h-4 w-4 animate-spin" /> : <Icons.gitHub className="mr-2 h-4 w-4" />} Github
       </Button>
     </div>

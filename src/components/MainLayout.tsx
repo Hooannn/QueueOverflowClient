@@ -7,6 +7,7 @@ import useUsers from '../services/users';
 import { Icons } from './icons';
 import useSubscriptions from '../services/subscriptions';
 import { NotificationBell } from './dashboard/notification';
+import { ModeToggle } from './dashboard/mode-toggle';
 
 export default function MainLayout(props: PropsWithChildren) {
   const { getFollowersQuery, getFollowingsQuery } = useUsers();
@@ -24,7 +25,7 @@ export default function MainLayout(props: PropsWithChildren) {
   return (
     <>
       {appLoading ? (
-        <div className="fixed inset-0 w-screen h-screen bg-white opacity-50 z-50 transition-opacity duration-300 ease-in-out flex items-center justify-center">
+        <div className="fixed inset-0 w-screen h-screen opacity-50 z-50 transition-opacity duration-300 ease-in-out flex items-center justify-center">
           <Icons.spinner className="h-16 w-16 animate-spin" />
         </div>
       ) : (
@@ -32,8 +33,9 @@ export default function MainLayout(props: PropsWithChildren) {
           <div className="border-b">
             <div className="flex h-16 items-center px-4">
               <MainNav className="mx-6" />
-              <div className="ml-auto flex items-center space-x-2">
+              <div className="ml-auto flex items-center space-x-1">
                 <Search />
+                <ModeToggle />
                 <NotificationBell />
                 <UserNav />
               </div>

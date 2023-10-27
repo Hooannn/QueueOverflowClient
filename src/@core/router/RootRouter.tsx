@@ -7,6 +7,7 @@ import DashboardPage from '../../pages/DashboardPage';
 import NotificationsPage from '../../pages/NotificationsPage';
 import ExplorePage from '../../pages/ExplorePage';
 import SettingsPage from '../../pages/SettingsPage';
+import SubmitPage from '../../pages/SubmitPage';
 
 const rootRouter = [
   {
@@ -22,6 +23,10 @@ const rootRouter = [
       {
         path: '/',
         element: <DashboardPage />,
+      },
+      {
+        path: '/submit',
+        element: <SubmitPage />,
       },
       {
         path: '/notifications',

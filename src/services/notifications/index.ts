@@ -3,19 +3,29 @@ import { onError } from '../../utils/error-handlers';
 import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { useEffect, useState } from 'react';
-import { GetQuery } from '../posts';
+import { Creator, GetQuery } from '../posts';
+import { useSocket } from '../../contexts/SocketContext';
+
+export interface Notification {
+  content: string;
+  created_at: string;
+  created_by: string;
+  creator?: Creator;
+  id: string;
+  idx: number;
+  meta_data?: any | null;
+  read: boolean;
+  recipient_id: string;
+  title: string;
+  updated_at: string;
+}
 
 const useNotifications = () => {
   const axios = useAxiosIns();
   const [query, setQuery] = useState<GetQuery>({
     skip: 0,
-    limit: 20,
+    limit: 5,
     relations: ['creator'],
-  });
-
-  const registerFcmTokenMutation = useMutation({
-    mutationFn: (token: string) => axios.post<IResponseData<any>>('/v1/notifications/fcm/token', { web: token }),
-    onError: onError,
   });
 
   const getNotificationsQuery = useQuery({
@@ -32,15 +42,57 @@ const useNotifications = () => {
     refetchOnWindowFocus: false,
   });
 
+  const markAllNotificationsMutation = useMutation({
+    mutationFn: () => axios.patch<IResponseData<unknown>>(`/v1/notifications/mark-all`),
+    onError,
+    onSuccess: () => {
+      refresh();
+    },
+  });
+
+  const deleteAllNotificationsMutation = useMutation({
+    mutationFn: () => axios.delete<IResponseData<unknown>>(`/v1/notifications`),
+    onError,
+    onSuccess: () => {
+      refresh();
+    },
+  });
+
+  const markAllNotificationMutation = useMutation({
+    mutationFn: (notificationId: string) => axios.patch<IResponseData<unknown>>(`/v1/notifications/mark/${notificationId}`),
+    onError,
+    onSuccess: () => {
+      refresh();
+    },
+  });
+
+  const refresh = async () => Promise.all([getNotificationsQuery.refetch(), getUnreadNotificationsCountQuery.refetch()]);
+
   const notifications = getNotificationsQuery.data?.data?.data;
   const unreadNotificationsCount = getUnreadNotificationsCountQuery.data?.data?.data;
 
+  const { socket } = useSocket();
+  useEffect(() => {
+    if (socket) {
+      socket.on('new-notification', () => {
+        refresh();
+      });
+    }
+
+    return () => {
+      socket?.removeListener('new-notification');
+    };
+  }, [socket]);
+
   return {
-    registerFcmTokenMutation,
     getNotificationsQuery,
     notifications,
     unreadNotificationsCount,
     getUnreadNotificationsCountQuery,
+    refresh,
+    markAllNotificationsMutation,
+    markAllNotificationMutation,
+    deleteAllNotificationsMutation,
   };
 };
 

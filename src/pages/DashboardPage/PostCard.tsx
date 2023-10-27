@@ -5,7 +5,7 @@ import { BellIcon, BellMinusIcon, CalendarDays, ChevronDownCircle, ChevronUpCirc
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../../components/ui/hover-card';
 import dayjs from '../../libs/dayjs';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@radix-ui/react-tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../../components/ui/tooltip';
 import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
@@ -76,7 +76,7 @@ export default function PostCard(props: { post: Post; refetchPostAt: (postId: st
   ];
 
   return (
-    <Card>
+    <Card className="rounded">
       <div className="flex">
         <div className="flex flex-col gap-1 justify-center items-center pl-6 relative">
           {isLoading && (
@@ -127,9 +127,7 @@ export default function PostCard(props: { post: Post; refetchPostAt: (postId: st
                       {action.title}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-xs p-2 rounded-lg shadow bg-white">{action.tooltip}</div>
-                  </TooltipContent>
+                  <TooltipContent>{action.tooltip}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ))}

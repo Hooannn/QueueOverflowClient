@@ -6,7 +6,10 @@ import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../@core/store';
 import { setFcmToken as setSavedFcmToken } from '../slices/app.slice';
-import useNotifications from '../services/notifications';
+import { useMutation } from 'react-query';
+import useAxiosIns from '../hooks/useAxiosIns';
+import { IResponseData } from '../types';
+import { onError } from '../utils/error-handlers';
 const FirebaseContext = createContext<firebase.FirebaseApp | null>(null);
 
 export const useFirebase = () => {
@@ -19,7 +22,13 @@ export const FirebaseProvider = ({ children, config }: PropsWithChildren<{ confi
   const dispatch = useDispatch();
   const isLogged = useSelector((state: RootState) => state.auth.isLogged);
   const savedFcmToken = useSelector((state: RootState) => state.app.fcmToken);
-  const { registerFcmTokenMutation } = useNotifications();
+  const axios = useAxiosIns();
+
+  const registerFcmTokenMutation = useMutation({
+    mutationFn: (token: string) => axios.post<IResponseData<any>>('/v1/notifications/fcm/token', { web: token }),
+    onError: onError,
+  });
+
   useEffect(() => {
     if (fcmToken && fcmToken !== savedFcmToken) {
       registerFcmTokenMutation.mutateAsync(fcmToken).then(() => {

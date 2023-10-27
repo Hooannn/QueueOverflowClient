@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { FirebaseProvider } from './contexts/FirebaseContext';
 import { SocketProvider } from './contexts/SocketContext';
 import type { FirebaseOptions } from 'firebase/app';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const isDev = import.meta.env.VITE_NODE_ENV === 'dev';
 const persistor = persistStore(store);
@@ -32,7 +33,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <QueryClientProvider client={queryClient}>
         <FirebaseProvider config={firebaseConfig}>
           <SocketProvider socketUrl={import.meta.env.VITE_SOCKET_ENDPOINT}>
-            <RouterProvider router={getRouter(isDev)}></RouterProvider>
+            <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+              <RouterProvider router={getRouter(isDev)}></RouterProvider>
+            </ThemeProvider>
           </SocketProvider>
         </FirebaseProvider>
       </QueryClientProvider>

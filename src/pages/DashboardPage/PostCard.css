@@ -1,0 +1,16 @@
+.post-card .ql-editor {
+    padding: 0;
+    min-height: unset;
+}
+
+.post-card .ql-container.ql-snow {
+    border: none;
+}
+
+.overlay-dark {
+    background-image: linear-gradient(to bottom, rgba(2, 8, 23, 0.1), rgba(2, 8, 23, 0.9));
+}
+
+.overlay-light {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.9));
+}

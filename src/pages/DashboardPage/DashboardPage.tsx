@@ -10,11 +10,13 @@ import { Input } from '../../components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Image } from 'lucide-react';
+import { Skeleton } from '../../components/ui/skeleton';
+import Empty from '../../components/Empty';
 
 export default function DashboardPage() {
   const dashboardContext = useSelector((state: RootState) => state.app.dashboardContext);
   const user = useSelector((state: RootState) => state.auth.user);
-  const { getPostMutation, posts } = usePosts();
+  const { getPostMutation, posts, getPostsQuery } = usePosts();
   const name = useMemo(() => {
     if (!user?.first_name && !user?.last_name) return `User ${user?.id}`;
     return `${user.first_name} ${user.last_name}`;
@@ -53,11 +55,27 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <ContextSelect />
       </div>
-      <div className="flex flex-col gap-4">
-        {posts?.map(post => (
-          <PostCard post={post} key={post.id} refetchPostAt={refetchPostAt} />
-        ))}
-      </div>
+      {getPostsQuery.isLoading ? (
+        <div className="flex flex-col gap-4">
+          {Array(5)
+            .fill(0)
+            .map((_, i) => (
+              <Skeleton key={`Skeleton::${i}`} className="w-full h-24 rounded" />
+            ))}
+        </div>
+      ) : (
+        <>
+          {posts && posts!.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              {posts?.map(post => (
+                <PostCard isPreview post={post} key={post.id} refetchPostAt={refetchPostAt} />
+              ))}
+            </div>
+          ) : (
+            <Empty />
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -3,10 +3,17 @@ import { onError } from '../../utils/error-handlers';
 import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { useState } from 'react';
-
+import { toast } from 'react-toastify';
+import toastConfig from '../../configs/toast';
 export enum VoteType {
   Up,
   Down,
+}
+
+export enum PostType {
+  Post = 'post',
+  Media = 'media',
+  Poll = 'poll',
 }
 
 export interface Topic {
@@ -43,6 +50,8 @@ export interface Comment {
   parent_id: string | null;
   meta_data?: any;
   post_id: string;
+  creator?: Creator;
+  votes?: Vote[];
 }
 
 export interface Post {
@@ -63,7 +72,7 @@ export interface Post {
 }
 
 export interface GetQuery {
-  skip?: number;
+  offset?: number;
   limit?: number;
   relations?: string[];
 }
@@ -72,7 +81,7 @@ const usePosts = (enabledAutoFetch = true) => {
   const axios = useAxiosIns();
 
   const [query, setQuery] = useState<GetQuery>({
-    skip: 0,
+    offset: 0,
     limit: 20,
     relations: ['votes', 'comments', 'creator', 'topics'],
   });
@@ -102,12 +111,22 @@ const usePosts = (enabledAutoFetch = true) => {
     onError,
   });
 
+  const createPostMutation = useMutation({
+    mutationFn: (params: { title: string; type: PostType; content: string; topics?: { id: string }[] }) =>
+      axios.post<IResponseData<Post>>(`/v1/posts`, params),
+    onError,
+    onSuccess: res => {
+      toast(res.data.message ?? 'Created successfully!', toastConfig('success'));
+    },
+  });
+
   return {
     getPostsQuery,
     setQuery,
     upvoteMutation,
     downvoteMutation,
     getPostMutation,
+    createPostMutation,
     posts,
   };
 };

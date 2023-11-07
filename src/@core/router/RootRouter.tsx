@@ -8,7 +8,7 @@ import NotificationsPage from '../../pages/NotificationsPage';
 import ExplorePage from '../../pages/ExplorePage';
 import SettingsPage from '../../pages/SettingsPage';
 import SubmitPage from '../../pages/SubmitPage';
-
+import PostPage from '../../pages/PostPage';
 const rootRouter = [
   {
     path: '/',
@@ -23,6 +23,10 @@ const rootRouter = [
       {
         path: '/',
         element: <DashboardPage />,
+      },
+      {
+        path: '/post/:id',
+        element: <PostPage />,
       },
       {
         path: '/submit',

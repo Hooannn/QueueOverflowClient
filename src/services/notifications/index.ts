@@ -23,7 +23,7 @@ export interface Notification {
 const useNotifications = () => {
   const axios = useAxiosIns();
   const [query, setQuery] = useState<GetQuery>({
-    skip: 0,
+    offset: 0,
     limit: 5,
     relations: ['creator'],
   });
@@ -74,13 +74,13 @@ const useNotifications = () => {
   const { socket } = useSocket();
   useEffect(() => {
     if (socket) {
-      socket.on('new-notification', () => {
+      socket.on('notification:create', () => {
         refresh();
       });
     }
 
     return () => {
-      socket?.removeListener('new-notification');
+      socket?.removeListener('notification:create');
     };
   }, [socket]);
 

@@ -1,4 +1,4 @@
-import usePosts, { Creator, Post, Topic, VoteType } from '../../services/posts';
+import usePosts, { Comment, Creator, Post, Topic, VoteType } from '../../services/posts';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { BellIcon, BellMinusIcon, CalendarDays, ChevronDownCircle, ChevronUpCircle } from 'lucide-react';
@@ -6,22 +6,41 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../../components/ui/hover-card';
 import dayjs from '../../libs/dayjs';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../../components/ui/tooltip';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import useUsers from '../../services/users';
 import { useNavigate } from 'react-router-dom';
 import { Icons } from '../../components/icons';
-import { BookmarkIcon, ChatBubbleIcon, EyeOpenIcon, Share2Icon } from '@radix-ui/react-icons';
+import {
+  BookmarkIcon,
+  ChatBubbleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  DotFilledIcon,
+  DotsVerticalIcon,
+  EyeOpenIcon,
+  Share2Icon,
+} from '@radix-ui/react-icons';
 import useSubscriptions from '../../services/subscriptions';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { IResponseData } from '../../types';
 import { Skeleton } from '../../components/ui/skeleton';
-export default function PostCard(props: { post: Post; refetchPostAt: (postId: string) => void }) {
+import ReactQuill from 'react-quill';
+import './PostCard.css';
+import { useTheme } from '../../contexts/ThemeContext';
+import { formats } from '../../configs/quill';
+import { Separator } from '../../components/ui/separator';
+import useComments from '../../services/comments';
+import { onError } from '../../utils/error-handlers';
+import Empty from '../../components/Empty';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
+export default function PostCard(props: { isPreview: boolean; post: Post; refetchPostAt: (postId: string) => void }) {
   const { upvoteMutation, downvoteMutation } = usePosts(false);
+  const navigate = useNavigate();
   const { subscriptions } = useSubscriptions();
-
+  const { raw } = useTheme();
   const isSubscribed = useCallback(
     (topicId: string) => {
       return subscriptions.map(s => s.topic_id).includes(topicId);
@@ -52,33 +71,67 @@ export default function PostCard(props: { post: Post; refetchPostAt: (postId: st
     [props.post],
   );
 
-  const ACTIONS = [
-    {
-      title: `${props.post.comments?.length} Comments`,
-      tooltip: 'Total comments of this post',
-      icon: <ChatBubbleIcon className="mr-2" />,
-    },
-    {
-      title: `Share`,
-      tooltip: 'Share this post if you think this is useful',
-      icon: <Share2Icon className="mr-2" />,
-    },
-    {
-      title: `Save`,
-      tooltip: 'Save this post to your collection',
-      icon: <BookmarkIcon className="mr-2" />,
-    },
-    {
-      title: `Follow`,
-      tooltip: 'Follow this post to receive notifications',
-      icon: <EyeOpenIcon className="mr-2" />,
-    },
-  ];
+  const ACTIONS =
+    user?.id === props.post.created_by
+      ? [
+          {
+            title: `${props.post.comments?.length} Comments`,
+            tooltip: 'Total comments of this post',
+            icon: <ChatBubbleIcon className="mr-2" />,
+          },
+          {
+            title: `Share`,
+            tooltip: 'Share this post if you think this is useful',
+            icon: <Share2Icon className="mr-2" />,
+          },
+          {
+            title: `Save`,
+            tooltip: 'Save this post to your collection',
+            icon: <BookmarkIcon className="mr-2" />,
+          },
+        ]
+      : [
+          {
+            title: `${props.post.comments?.length} Comments`,
+            tooltip: 'Total comments of this post',
+            icon: <ChatBubbleIcon className="mr-2" />,
+          },
+          {
+            title: `Share`,
+            tooltip: 'Share this post if you think this is useful',
+            icon: <Share2Icon className="mr-2" />,
+          },
+          {
+            title: `Save`,
+            tooltip: 'Save this post to your collection',
+            icon: <BookmarkIcon className="mr-2" />,
+          },
+          {
+            title: `Follow`,
+            tooltip: 'Follow this post to receive notifications',
+            icon: <EyeOpenIcon className="mr-2" />,
+          },
+        ];
+
+  const [contentHeight, setContentHeight] = useState();
+
+  const quillRef = useRef<ReactQuill>(null);
+  useEffect(() => {
+    if (quillRef.current) {
+      const clientHeight = (quillRef.current.editingArea as any)?.clientHeight;
+      setContentHeight(clientHeight);
+    }
+  }, []);
+
+  const goToPost = () => {
+    if (!props.isPreview) return;
+    navigate(`/post/${props.post.id}`);
+  };
 
   return (
-    <Card className="rounded">
+    <Card onClick={goToPost} className={`rounded transition ${props.isPreview ? 'hover:border-2 hover:border-solid hover:border-sky-200' : ''}`}>
       <div className="flex">
-        <div className="flex flex-col gap-1 justify-center items-center pl-6 relative">
+        <div className="flex flex-col gap-1 justify-start pt-6 items-center pl-6 relative">
           {isLoading && (
             <div className="absolute top-0 left-0 h-full w-full bg-white opacity-70 z-50 transition-opacity duration-300 ease-in-out flex items-center justify-center">
               <Icons.spinner className="h-4 w-4 animate-spin" />
@@ -116,7 +169,22 @@ export default function PostCard(props: { post: Post; refetchPostAt: (postId: st
             </CardDescription>
             <CardTitle>{props.post.title}</CardTitle>
           </CardHeader>
-          <CardContent>{props.post.content}</CardContent>
+          <CardContent className="relative post-card">
+            <ReactQuill
+              ref={quillRef}
+              className={`p-0 ${props.isPreview ? 'max-h-[250px]' : ''} overflow-hidden`}
+              value={props.post.content}
+              formats={['header', 'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block', 'list', 'bullet', 'indent', 'link', 'image']}
+              readOnly={true}
+              theme={'snow'}
+              modules={{ toolbar: false }}
+            ></ReactQuill>
+            {props.isPreview && contentHeight && contentHeight >= 250 && (
+              <div className="absolute w-full p-6 left-0 bottom-0">
+                <div className={`w-full h-12 ${raw === 'dark' ? 'overlay-dark' : 'overlay-light'}`}></div>
+              </div>
+            )}
+          </CardContent>
           <CardFooter className="flex gap-2">
             {ACTIONS.map(action => (
               <TooltipProvider key={action.title}>
@@ -132,9 +200,203 @@ export default function PostCard(props: { post: Post; refetchPostAt: (postId: st
               </TooltipProvider>
             ))}
           </CardFooter>
+
+          {!props.isPreview && (
+            <CardContent>
+              <CommentSection postId={props.post.id} creator={props.post.creator} comments={props.post.comments} />
+            </CardContent>
+          )}
         </div>
       </div>
     </Card>
+  );
+}
+
+export function CommentSection(props: { postId: string; creator: Creator; comments: Comment[] }) {
+  const quillRef = useRef<ReactQuill>(null);
+  const [commentValue, setCommentValue] = useState<string>();
+  const [commentContentLength, setCommentContentLength] = useState<number>();
+  const queryClient = useQueryClient();
+  const updateValueLength = () => {
+    const innerText = (quillRef?.current?.editingArea as any)?.innerText;
+    const replaceBreak = (innerText as string).replace('\n', '');
+    const length = replaceBreak.trim().length;
+    setCommentContentLength(length);
+  };
+
+  const { createCommentMutation } = useComments();
+
+  const submitComment = () => {
+    if (commentContentLength == 0 || !commentValue) {
+      return onError({ message: 'Please enter a comment', name: 'Error' });
+    }
+
+    createCommentMutation
+      .mutateAsync({
+        content: commentValue,
+        post_id: props.postId,
+      })
+      .then(() => {
+        setCommentValue('');
+        setCommentContentLength(0);
+        queryClient.invalidateQueries({
+          queryKey: ['fetch/post', props.postId],
+        });
+      });
+  };
+  return (
+    <div>
+      <div className="flex flex-col gap-1">
+        <small>
+          Comment as <CreatorCard creator={props.creator} />
+        </small>
+        <ReactQuill
+          ref={quillRef}
+          placeholder="What are your thoughts"
+          className="rounded"
+          readOnly={createCommentMutation.isLoading}
+          theme="snow"
+          value={commentValue}
+          onChange={e => {
+            updateValueLength();
+            setCommentValue(e);
+          }}
+        />
+        <div className="flex items-center justify-end">
+          <Button isLoading={createCommentMutation.isLoading} onClick={submitComment}>
+            Comment
+          </Button>
+        </div>
+      </div>
+      <Separator className="my-6" />
+      <div className="flex flex-col gap-4">
+        {props.comments?.length > 0 ? (
+          <>
+            {props.comments.map(comment => (
+              <CommentCard key={comment.id} comment={comment} postId={props.postId} />
+            ))}
+          </>
+        ) : (
+          <div className="w-1/2 flex items-center justify-center mx-auto">
+            <Empty text="No comments." />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function CommentCard({ comment, postId }: { comment: Comment; postId: string }) {
+  const queryClient = useQueryClient();
+  const { upvoteCommentMutation, downvoteCommentMutation, removeCommentMutation } = useComments();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const vote = useMemo(() => comment.votes?.find(v => v.uid === user?.id), [comment, user]);
+  const votePoints = useMemo(
+    () =>
+      comment.votes?.reduce((prev, current) => {
+        if (current.type === VoteType.Up) prev++;
+        else prev--;
+        return prev;
+      }, 0),
+    [comment],
+  );
+  const name = useMemo(() => {
+    if (!comment.creator?.first_name && !comment.creator?.last_name) return `User ${comment.creator?.id}`;
+    return `${comment.creator?.first_name} ${comment.creator?.last_name}`;
+  }, [comment]);
+
+  const shortName = name[0] + name[1];
+
+  const remove = () => {
+    removeCommentMutation.mutateAsync(comment.id).then(() => {
+      queryClient.invalidateQueries({
+        queryKey: ['fetch/post', postId],
+      });
+    });
+  };
+  const upvote = () => {
+    upvoteCommentMutation.mutateAsync(comment.id).then(() => {
+      queryClient.invalidateQueries({
+        queryKey: ['fetch/post', postId],
+      });
+    });
+  };
+
+  const downvote = () => {
+    downvoteCommentMutation.mutateAsync(comment.id).then(() => {
+      queryClient.invalidateQueries({
+        queryKey: ['fetch/post', postId],
+      });
+    });
+  };
+
+  const isVoting = upvoteCommentMutation.isLoading || downvoteCommentMutation.isLoading;
+  return (
+    <div className="flex items-start gap-4 post-card">
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={comment.creator?.avatar} alt={shortName} />
+        <AvatarFallback>{shortName}</AvatarFallback>
+      </Avatar>
+      <div className="flex flex-col w-full">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <CreatorCard creator={comment.creator as Creator} />
+            <DotFilledIcon className="w-2 h-2" color="grey" />
+            <div className="text-xs text-muted-foreground mt-1">{dayjs(comment.created_at).fromNow()}</div>
+          </div>
+          {user?.id === comment.created_by && (
+            <Popover>
+              <PopoverTrigger>
+                <Button size={'icon'} variant={'ghost'}>
+                  <DotsVerticalIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-2 w-52">
+                <div className="flex flex-col">
+                  <Button
+                    isLoading={removeCommentMutation.isLoading}
+                    disabled={removeCommentMutation.isLoading}
+                    onClick={remove}
+                    variant={'ghost'}
+                    className="justify-start"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
+        <ReactQuill className="rounded" readOnly theme="snow" modules={{ toolbar: false }} formats={formats} value={comment.content} />
+        <div className="flex gap-2 mt-2">
+          <div className="flex items-center gap-2">
+            <Button
+              isLoading={isVoting}
+              disabled={isVoting}
+              onClick={upvote}
+              variant={vote && vote.type === VoteType.Up ? 'default' : 'secondary'}
+              size={'icon'}
+            >
+              <ChevronUpIcon />
+            </Button>
+            <strong>{votePoints}</strong>
+            <Button
+              disabled={isVoting}
+              isLoading={isVoting}
+              variant={vote && vote.type === VoteType.Down ? 'default' : 'secondary'}
+              onClick={downvote}
+              size={'icon'}
+            >
+              <ChevronDownIcon />
+            </Button>
+          </div>
+          <Button variant="secondary">
+            <ChatBubbleIcon className="mr-2" />
+            Reply
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -18,30 +18,32 @@ export default function PostPage() {
     queryKey: ['fetch/post', params.id],
     refetchOnWindowFocus: false,
     queryFn: () => axios.get<IResponseData<Post>>(`/v1/posts/${params.id}`),
+    onSuccess: res => {
+      if (!socket) {
+        const newSocket = io(`${import.meta.env.VITE_SOCKET_ENDPOINT}posts`);
+
+        newSocket.on('connect', () => {
+          newSocket.emit('subscribe', res.data.data.id);
+        });
+
+        newSocket.on('comment:create', (data: { postId: string; creatorId: string }) => {
+          if (user?.id !== data?.creatorId) refetch();
+        });
+
+        setSocket(newSocket);
+      }
+    },
   });
 
   const post = data?.data?.data as Post;
   const user = useSelector((state: RootState) => state.auth.user);
   useEffect(() => {
-    if (!socket && post?.id) {
-      const newSocket = io(`${import.meta.env.VITE_SOCKET_ENDPOINT}posts`);
-
-      newSocket.on('connect', () => {
-        newSocket.emit('subscribe', post.id);
-      });
-
-      newSocket.on('comment:create', (data: { postId: string; creatorId: string }) => {
-        if (user?.id !== data?.creatorId) refetch();
-      });
-
-      setSocket(newSocket);
-    }
-
     return () => {
+      console.warn('Clean up', socket);
       socket?.disconnect();
       socket?.close();
     };
-  }, [post, socket]);
+  }, [socket]);
   return (
     <>
       {isLoading ? (

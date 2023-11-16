@@ -9,6 +9,7 @@ import ExplorePage from '../../pages/ExplorePage';
 import SettingsPage from '../../pages/SettingsPage';
 import SubmitPage from '../../pages/SubmitPage';
 import PostPage from '../../pages/PostPage';
+import ProfilePage from '../../pages/ProfilePage';
 const rootRouter = [
   {
     path: '/',
@@ -43,6 +44,10 @@ const rootRouter = [
       {
         path: '/settings',
         element: <SettingsPage />,
+      },
+      {
+        path: '/profile/:id',
+        element: <ProfilePage />,
       },
     ],
     errorElement: <ErrorPage />,

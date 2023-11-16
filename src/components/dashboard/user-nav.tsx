@@ -14,6 +14,7 @@ import {
 import { RootState } from '../../@core/store';
 import { useMemo } from 'react';
 import { signOut } from '../../slices/auth.slice';
+import { useNavigate } from 'react-router-dom';
 
 export function UserNav() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -22,7 +23,7 @@ export function UserNav() {
     if (!user?.first_name && !user?.last_name) return `User ${user?.id}`;
     return `${user?.first_name} ${user?.last_name}`;
   }, [user]);
-
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const shortName = name[0] + name[1];
   return (
@@ -44,7 +45,7 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate(`/profile/${user?.id}`)}>
             Profile
             <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>

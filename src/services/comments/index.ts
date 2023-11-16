@@ -17,12 +17,14 @@ const useComments = () => {
   });
 
   const upvoteCommentMutation = useMutation({
-    mutationFn: (commentId: string) => axios.post<IResponseData<unknown>>(`/v1/comments/upvote/${commentId}`),
+    mutationFn: ({ commentId, postId }: { commentId: string; postId: string }) =>
+      axios.post<IResponseData<unknown>>(`/v1/comments/upvote/${commentId}/post/${postId}`),
     onError,
   });
 
   const downvoteCommentMutation = useMutation({
-    mutationFn: (commentId: string) => axios.post<IResponseData<unknown>>(`/v1/comments/downvote/${commentId}`),
+    mutationFn: ({ commentId, postId }: { commentId: string; postId: string }) =>
+      axios.post<IResponseData<unknown>>(`/v1/comments/downvote/${commentId}/post/${postId}`),
     onError,
   });
 

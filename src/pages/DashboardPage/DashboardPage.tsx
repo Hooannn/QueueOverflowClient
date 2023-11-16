@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import { ContextSelect } from './ContextSelect';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import usePosts from '../../services/posts';
 import PostCard from './PostCard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
@@ -12,6 +12,7 @@ import { Button } from '../../components/ui/button';
 import { Image } from 'lucide-react';
 import { Skeleton } from '../../components/ui/skeleton';
 import Empty from '../../components/Empty';
+import SharedDialog from './SharedDialog';
 
 export default function DashboardPage() {
   const dashboardContext = useSelector((state: RootState) => state.app.dashboardContext);
@@ -33,12 +34,23 @@ export default function DashboardPage() {
   };
 
   const navigate = useNavigate();
+  const [shouldShowSharedDialog, setShowSharedDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareTitle, setShareTitle] = useState('');
+
+  const showShareDialog = (postId: string, postTitle: string) => {
+    setShowSharedDialog(true);
+    setShareUrl(`${window.location.href}post/${postId}`);
+    setShareTitle(postTitle);
+  };
 
   useEffect(() => {
     console.log(dashboardContext);
   }, [dashboardContext]);
+
   return (
     <div className="flex-1 space-y-4 p-4">
+      <SharedDialog shareUrl={shareUrl} title={shareTitle} onOpenChange={val => setShowSharedDialog(val)} isOpen={shouldShowSharedDialog} />
       <Card className="rounded">
         <CardContent className="p-2 flex items-center justify-center gap-2">
           <Avatar className="h-12 w-12">
@@ -68,7 +80,15 @@ export default function DashboardPage() {
           {posts && posts!.length > 0 ? (
             <div className="flex flex-col gap-4">
               {posts?.map(post => (
-                <PostCard isPreview post={post} key={post.id} refetchPostAt={refetchPostAt} />
+                <PostCard
+                  showSharedDialog={(postId, postTitle) => {
+                    showShareDialog(postId, postTitle);
+                  }}
+                  isPreview
+                  post={post}
+                  key={post.id}
+                  refetchPostAt={refetchPostAt}
+                />
               ))}
             </div>
           ) : (

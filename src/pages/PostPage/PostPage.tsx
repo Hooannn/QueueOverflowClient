@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { Socket, io } from 'socket.io-client';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
+import SharedDialog from '../DashboardPage/SharedDialog';
 
 export default function PostPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -26,7 +27,15 @@ export default function PostPage() {
           newSocket.emit('subscribe', res.data.data.id);
         });
 
-        newSocket.on('comment:create', (data: { postId: string; creatorId: string }) => {
+        newSocket.on('comment:created', (data: { postId: string; creatorId: string }) => {
+          if (user?.id !== data?.creatorId) refetch();
+        });
+
+        newSocket.on('comment:removed', (data: { postId: string; creatorId: string }) => {
+          if (user?.id !== data?.creatorId) refetch();
+        });
+
+        newSocket.on('comment:updated', (data: { postId: string; creatorId: string }) => {
           if (user?.id !== data?.creatorId) refetch();
         });
 
@@ -39,11 +48,20 @@ export default function PostPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   useEffect(() => {
     return () => {
-      console.warn('Clean up', socket);
       socket?.disconnect();
       socket?.close();
     };
   }, [socket]);
+
+  const [shouldShowSharedDialog, setShowSharedDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareTitle, setShareTitle] = useState('');
+
+  const showShareDialog = (postId: string, postTitle: string) => {
+    setShowSharedDialog(true);
+    setShareUrl(`${window.location.href}post/${postId}`);
+    setShareTitle(postTitle);
+  };
   return (
     <>
       {isLoading ? (
@@ -52,12 +70,16 @@ export default function PostPage() {
         </div>
       ) : (
         <div>
+          <SharedDialog shareUrl={shareUrl} title={shareTitle} onOpenChange={val => setShowSharedDialog(val)} isOpen={shouldShowSharedDialog} />
           <PostCard
             isPreview={false}
             refetchPostAt={(postId: string) => {
               if (postId === post.id) refetch();
             }}
             post={post}
+            showSharedDialog={(postId, postTitle) => {
+              showShareDialog(postId, postTitle);
+            }}
           />
         </div>
       )}

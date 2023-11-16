@@ -8,12 +8,14 @@ export interface AppState {
   dashboardContext: DashboardContext;
   following: Following[];
   followers: Follower[];
+  savedPostIds: string[];
   subscriptions: Subscription[];
 }
 
 const initialState: AppState = {
   fcmToken: undefined,
   dashboardContext: 'best',
+  savedPostIds: [],
   following: [],
   followers: [],
   subscriptions: [],
@@ -37,9 +39,12 @@ export const appSlice = createSlice({
     setSubscriptions: (state, { payload }: { payload: Subscription[] }) => {
       state.subscriptions = payload;
     },
+    setSavedPostIds: (state, { payload }: { payload: string[] }) => {
+      state.savedPostIds = payload;
+    },
   },
 });
 
-export const { setSubscriptions, setFcmToken, setDashboardContext, setFollowing, setFollowers } = appSlice.actions;
+export const { setSavedPostIds, setSubscriptions, setFcmToken, setDashboardContext, setFollowing, setFollowers } = appSlice.actions;
 
 export default appSlice.reducer;

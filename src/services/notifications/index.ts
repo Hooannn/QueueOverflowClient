@@ -74,13 +74,13 @@ const useNotifications = () => {
   const { socket } = useSocket();
   useEffect(() => {
     if (socket) {
-      socket.on('notification:create', () => {
+      socket.on('notification:created', () => {
         refresh();
       });
     }
 
     return () => {
-      socket?.removeListener('notification:create');
+      socket?.removeListener('notification:created');
     };
   }, [socket]);
 

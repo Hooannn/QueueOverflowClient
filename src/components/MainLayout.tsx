@@ -9,20 +9,22 @@ import useSubscriptions from '../services/subscriptions';
 import { NotificationBell } from './dashboard/notification';
 import { ModeToggle } from './dashboard/mode-toggle';
 import Loading from './Loading';
+import useSavedPosts from '../services/saved_posts';
 
 export default function MainLayout(props: PropsWithChildren) {
   const { getFollowersQuery, getFollowingsQuery } = useUsers();
+  const { getSavedPostIdsQuery } = useSavedPosts(false);
   const { getSubscriptionsQuery } = useSubscriptions();
 
   const initializeApp = async () => {
-    await Promise.all([getFollowersQuery.refetch(), getFollowingsQuery.refetch(), getSubscriptionsQuery.refetch()]);
+    await Promise.all([getFollowersQuery.refetch(), getFollowingsQuery.refetch(), getSubscriptionsQuery.refetch(), getSavedPostIdsQuery.refetch()]);
   };
 
   useEffect(() => {
     initializeApp();
   }, []);
 
-  const appLoading = useMemo(() => getFollowersQuery.isLoading || getFollowingsQuery.isLoading, [getFollowersQuery, getFollowingsQuery]);
+  const appLoading = getSubscriptionsQuery.isLoading || getFollowersQuery.isLoading || getFollowingsQuery.isLoading || getSavedPostIdsQuery.isLoading;
   return (
     <>
       {appLoading ? (

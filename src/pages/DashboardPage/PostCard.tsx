@@ -36,8 +36,16 @@ import useComments from '../../services/comments';
 import { onError } from '../../utils/error-handlers';
 import Empty from '../../components/Empty';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
-export default function PostCard(props: { isPreview: boolean; post: Post; refetchPostAt: (postId: string) => void }) {
+import useSavedPosts from '../../services/saved_posts';
+import SharedDialog from './SharedDialog';
+export default function PostCard(props: {
+  showSharedDialog: (postId: string, postTitle: string) => void;
+  isPreview: boolean;
+  post: Post;
+  refetchPostAt: (postId: string) => void;
+}) {
   const { upvoteMutation, downvoteMutation } = usePosts(false);
+  const { createSavedPostMutation, removeSavedPostMutation, savedPostIds, getSavedPostIdsQuery } = useSavedPosts(false);
   const navigate = useNavigate();
   const { subscriptions } = useSubscriptions();
   const { raw } = useTheme();
@@ -51,12 +59,29 @@ export default function PostCard(props: { isPreview: boolean; post: Post; refetc
   const user = useSelector((state: RootState) => state.auth.user);
   const vote = useMemo(() => props.post.votes?.find(v => v.uid === user?.id), [props.post, user]);
 
+  const isSaved = useMemo(() => {
+    return savedPostIds.includes(props.post.id);
+  }, [savedPostIds]);
+
   const upvote = () => {
     upvoteMutation.mutateAsync(props.post.id).then(() => props.refetchPostAt(props.post.id));
   };
 
   const downvote = () => {
     downvoteMutation.mutateAsync(props.post.id).then(() => props.refetchPostAt(props.post.id));
+  };
+
+  const savePost = () => {
+    createSavedPostMutation.mutateAsync(props.post.id).then(() => getSavedPostIdsQuery.refetch());
+  };
+
+  const removeSavedPost = () => {
+    removeSavedPostMutation.mutateAsync(props.post.id).then(() => getSavedPostIdsQuery.refetch());
+  };
+
+  const goToPost = () => {
+    if (!props.isPreview) return;
+    navigate(`/post/${props.post.id}`);
   };
 
   const isLoading = upvoteMutation.isLoading || downvoteMutation.isLoading;
@@ -78,16 +103,23 @@ export default function PostCard(props: { isPreview: boolean; post: Post; refetc
             title: `${props.post.comments?.length} Comments`,
             tooltip: 'Total comments of this post',
             icon: <ChatBubbleIcon className="mr-2" />,
+            action: goToPost,
           },
           {
             title: `Share`,
             tooltip: 'Share this post if you think this is useful',
             icon: <Share2Icon className="mr-2" />,
+            action: () => {
+              props.showSharedDialog(props.post.id, props.post.title);
+            },
           },
           {
             title: `Save`,
-            tooltip: 'Save this post to your collection',
+            tooltip: isSaved ? 'Remove this post from your saved collection' : 'Save this post to your collection',
             icon: <BookmarkIcon className="mr-2" />,
+            buttonVariant: isSaved ? 'default' : 'secondary',
+            isLoading: createSavedPostMutation.isLoading || removeSavedPostMutation.isLoading || getSavedPostIdsQuery.isLoading,
+            action: isSaved ? removeSavedPost : savePost,
           },
         ]
       : [
@@ -95,21 +127,29 @@ export default function PostCard(props: { isPreview: boolean; post: Post; refetc
             title: `${props.post.comments?.length} Comments`,
             tooltip: 'Total comments of this post',
             icon: <ChatBubbleIcon className="mr-2" />,
+            action: goToPost,
           },
           {
             title: `Share`,
             tooltip: 'Share this post if you think this is useful',
             icon: <Share2Icon className="mr-2" />,
+            action: () => {
+              props.showSharedDialog(props.post.id, props.post.title);
+            },
           },
           {
             title: `Save`,
-            tooltip: 'Save this post to your collection',
+            tooltip: isSaved ? 'Remove this post from your saved collection' : 'Save this post to your collection',
             icon: <BookmarkIcon className="mr-2" />,
+            buttonVariant: isSaved ? 'default' : 'secondary',
+            isLoading: createSavedPostMutation.isLoading || removeSavedPostMutation.isLoading || getSavedPostIdsQuery.isLoading,
+            action: isSaved ? removeSavedPost : savePost,
           },
           {
             title: `Follow`,
             tooltip: 'Follow this post to receive notifications',
             icon: <EyeOpenIcon className="mr-2" />,
+            action: () => {},
           },
         ];
 
@@ -122,11 +162,6 @@ export default function PostCard(props: { isPreview: boolean; post: Post; refetc
       setContentHeight(clientHeight);
     }
   }, []);
-
-  const goToPost = () => {
-    if (!props.isPreview) return;
-    navigate(`/post/${props.post.id}`);
-  };
 
   return (
     <Card onClick={goToPost} className={`rounded transition ${props.isPreview ? 'hover:border-2 hover:border-solid hover:border-sky-200' : ''}`}>
@@ -190,7 +225,14 @@ export default function PostCard(props: { isPreview: boolean; post: Post; refetc
               <TooltipProvider key={action.title}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="secondary">
+                    <Button
+                      variant={(action.buttonVariant as any) ?? 'secondary'}
+                      isLoading={action.isLoading ?? false}
+                      onClick={e => {
+                        e.stopPropagation();
+                        action.action();
+                      }}
+                    >
                       {action.icon}
                       {action.title}
                     </Button>
@@ -315,7 +357,7 @@ export function CommentCard({ comment, postId }: { comment: Comment; postId: str
     });
   };
   const upvote = () => {
-    upvoteCommentMutation.mutateAsync(comment.id).then(() => {
+    upvoteCommentMutation.mutateAsync({ commentId: comment.id, postId }).then(() => {
       queryClient.invalidateQueries({
         queryKey: ['fetch/post', postId],
       });
@@ -323,7 +365,7 @@ export function CommentCard({ comment, postId }: { comment: Comment; postId: str
   };
 
   const downvote = () => {
-    downvoteCommentMutation.mutateAsync(comment.id).then(() => {
+    downvoteCommentMutation.mutateAsync({ commentId: comment.id, postId }).then(() => {
       queryClient.invalidateQueries({
         queryKey: ['fetch/post', postId],
       });
@@ -454,12 +496,28 @@ export function TopicCard(props: { topic: Topic; isSubscribed: boolean }) {
             <div className="text-sm text-muted-foreground">There are no description about this topic...</div>
           )}
           {props.isSubscribed ? (
-            <Button isLoading={isLoading} onClick={unsubscribe} size={'lg'} className="w-full">
+            <Button
+              isLoading={isLoading}
+              onClick={e => {
+                e.stopPropagation();
+                unsubscribe();
+              }}
+              size={'lg'}
+              className="w-full"
+            >
               <BellMinusIcon size={16} className="mr-1" />
               Unsubscribe
             </Button>
           ) : (
-            <Button isLoading={isLoading} onClick={subscribe} size={'lg'} className="w-full">
+            <Button
+              isLoading={isLoading}
+              onClick={e => {
+                e.stopPropagation();
+                subscribe();
+              }}
+              size={'lg'}
+              className="w-full"
+            >
               <BellIcon size={16} className="mr-1" />
               Subscribe
             </Button>
@@ -488,11 +546,18 @@ export function CreatorCard(props: { creator: Creator }) {
 
   const navigate = useNavigate();
 
-  const navigateToUserPage = () => navigate(`/user/${props.creator.id}`);
+  const navigateToProfilePage = () => navigate(`/profile/${props.creator.id}`);
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Button onClick={navigateToUserPage} variant="link" className="px-0">
+        <Button
+          onClick={e => {
+            e.stopPropagation();
+            navigateToProfilePage();
+          }}
+          variant="link"
+          className="px-0"
+        >
           @{name}
         </Button>
       </HoverCardTrigger>
@@ -503,7 +568,13 @@ export function CreatorCard(props: { creator: Creator }) {
             <AvatarFallback>{name[0]}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
-            <h4 onClick={navigateToUserPage} className="text-sm font-semibold cursor-pointer">
+            <h4
+              onClick={e => {
+                e.stopPropagation();
+                navigateToProfilePage();
+              }}
+              className="text-sm font-semibold cursor-pointer"
+            >
               @{name}
             </h4>
             <div className="flex items-center">

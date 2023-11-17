@@ -14,6 +14,7 @@ export interface SavedPost {
   uid: string;
   created_at: string;
   updated_at: string;
+  post_id: string;
   post?: Post;
 }
 
@@ -57,7 +58,7 @@ const useSavedPosts = (enabledAutoFetch = true) => {
   });
 
   const removeSavedPostMutation = useMutation({
-    mutationFn: (postId: string) => axios.delete<IResponseData<SavedPost>>(`/v1/saved_posts/post/${postId}`),
+    mutationFn: (postId: string) => axios.delete<IResponseData<any>>(`/v1/saved_posts/post/${postId}`),
     onError,
     onSuccess: res => {
       toast(res.data.message ?? 'Deleted!', toastConfig('success'));

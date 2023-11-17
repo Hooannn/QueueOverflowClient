@@ -1,30 +1,42 @@
-import { PropsWithChildren, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { MainNav } from './dashboard/main-nav';
 import { UserNav } from './dashboard/user-nav';
 import { Search } from './dashboard/search';
 import useUsers from '../services/users';
-import { Icons } from './icons';
 import useSubscriptions from '../services/subscriptions';
 import { NotificationBell } from './dashboard/notification';
 import { ModeToggle } from './dashboard/mode-toggle';
 import Loading from './Loading';
 import useSavedPosts from '../services/saved_posts';
+import usePostSubscriptions from '../services/post_subscriptions';
 
-export default function MainLayout(props: PropsWithChildren) {
+export default function MainLayout() {
   const { getFollowersQuery, getFollowingsQuery } = useUsers();
   const { getSavedPostIdsQuery } = useSavedPosts(false);
   const { getSubscriptionsQuery } = useSubscriptions();
+  const { getPostSubscriptionsQuery } = usePostSubscriptions();
 
   const initializeApp = async () => {
-    await Promise.all([getFollowersQuery.refetch(), getFollowingsQuery.refetch(), getSubscriptionsQuery.refetch(), getSavedPostIdsQuery.refetch()]);
+    await Promise.all([
+      getPostSubscriptionsQuery.refetch(),
+      getFollowersQuery.refetch(),
+      getFollowingsQuery.refetch(),
+      getSubscriptionsQuery.refetch(),
+      getSavedPostIdsQuery.refetch(),
+    ]);
   };
 
   useEffect(() => {
     initializeApp();
   }, []);
 
-  const appLoading = getSubscriptionsQuery.isLoading || getFollowersQuery.isLoading || getFollowingsQuery.isLoading || getSavedPostIdsQuery.isLoading;
+  const appLoading =
+    getPostSubscriptionsQuery.isLoading ||
+    getSubscriptionsQuery.isLoading ||
+    getFollowersQuery.isLoading ||
+    getFollowingsQuery.isLoading ||
+    getSavedPostIdsQuery.isLoading;
   return (
     <>
       {appLoading ? (

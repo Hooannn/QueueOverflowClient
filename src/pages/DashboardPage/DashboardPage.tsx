@@ -4,7 +4,7 @@ import { ContextSelect } from './ContextSelect';
 import { useEffect, useMemo, useState } from 'react';
 import usePosts from '../../services/posts';
 import PostCard from './PostCard';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { AvatarImage, AvatarFallback, Avatar } from '../../components/ui/avatar';
 import { Input } from '../../components/ui/input';
 import { useNavigate } from 'react-router-dom';

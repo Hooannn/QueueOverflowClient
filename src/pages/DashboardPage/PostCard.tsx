@@ -37,7 +37,7 @@ import { onError } from '../../utils/error-handlers';
 import Empty from '../../components/Empty';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import useSavedPosts from '../../services/saved_posts';
-import SharedDialog from './SharedDialog';
+import usePostSubscriptions from '../../services/post_subscriptions';
 export default function PostCard(props: {
   showSharedDialog: (postId: string, postTitle: string) => void;
   isPreview: boolean;
@@ -48,6 +48,7 @@ export default function PostCard(props: {
   const { createSavedPostMutation, removeSavedPostMutation, savedPostIds, getSavedPostIdsQuery } = useSavedPosts(false);
   const navigate = useNavigate();
   const { subscriptions } = useSubscriptions();
+  const { postSubscriptions, createPostSubscriptionMutation, getPostSubscriptionsQuery, removePostSubscriptionMutation } = usePostSubscriptions();
   const { raw } = useTheme();
   const isSubscribed = useCallback(
     (topicId: string) => {
@@ -59,9 +60,9 @@ export default function PostCard(props: {
   const user = useSelector((state: RootState) => state.auth.user);
   const vote = useMemo(() => props.post.votes?.find(v => v.uid === user?.id), [props.post, user]);
 
-  const isSaved = useMemo(() => {
-    return savedPostIds.includes(props.post.id);
-  }, [savedPostIds]);
+  const isSaved = useMemo(() => savedPostIds.includes(props.post.id), [savedPostIds]);
+
+  const isFollowed = useMemo(() => postSubscriptions.some(sub => sub.post_id === props.post.id && sub.uid === user?.id), [postSubscriptions]);
 
   const upvote = () => {
     upvoteMutation.mutateAsync(props.post.id).then(() => props.refetchPostAt(props.post.id));
@@ -69,6 +70,18 @@ export default function PostCard(props: {
 
   const downvote = () => {
     downvoteMutation.mutateAsync(props.post.id).then(() => props.refetchPostAt(props.post.id));
+  };
+
+  const follow = () => {
+    createPostSubscriptionMutation.mutateAsync(props.post.id).then(() => {
+      getPostSubscriptionsQuery.refetch();
+    });
+  };
+
+  const unfollow = () => {
+    removePostSubscriptionMutation.mutateAsync(props.post.id).then(() => {
+      getPostSubscriptionsQuery.refetch();
+    });
   };
 
   const savePost = () => {
@@ -114,7 +127,7 @@ export default function PostCard(props: {
             },
           },
           {
-            title: `Save`,
+            title: isSaved ? `Saved` : 'Save',
             tooltip: isSaved ? 'Remove this post from your saved collection' : 'Save this post to your collection',
             icon: <BookmarkIcon className="mr-2" />,
             buttonVariant: isSaved ? 'default' : 'secondary',
@@ -138,7 +151,7 @@ export default function PostCard(props: {
             },
           },
           {
-            title: `Save`,
+            title: isSaved ? `Saved` : 'Save',
             tooltip: isSaved ? 'Remove this post from your saved collection' : 'Save this post to your collection',
             icon: <BookmarkIcon className="mr-2" />,
             buttonVariant: isSaved ? 'default' : 'secondary',
@@ -146,10 +159,12 @@ export default function PostCard(props: {
             action: isSaved ? removeSavedPost : savePost,
           },
           {
-            title: `Follow`,
-            tooltip: 'Follow this post to receive notifications',
+            title: isFollowed ? `Followed` : 'Follow',
+            tooltip: isFollowed ? 'Unfollow this post to stop receiving notifications' : 'Follow this post to receive notifications',
             icon: <EyeOpenIcon className="mr-2" />,
-            action: () => {},
+            isLoading: createPostSubscriptionMutation.isLoading || removePostSubscriptionMutation.isLoading || getPostSubscriptionsQuery.isLoading,
+            buttonVariant: isFollowed ? 'default' : 'secondary',
+            action: isFollowed ? unfollow : follow,
           },
         ];
 

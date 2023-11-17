@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { Follower, Following } from '../services/users';
 import { Subscription } from '../services/subscriptions';
+import { PostSubscriptions } from '../services/post_subscriptions';
 
 export type DashboardContext = 'best' | 'hot' | 'new' | 'top';
 export interface AppState {
@@ -10,6 +11,7 @@ export interface AppState {
   followers: Follower[];
   savedPostIds: string[];
   subscriptions: Subscription[];
+  postSubscriptions: PostSubscriptions[];
 }
 
 const initialState: AppState = {
@@ -19,6 +21,7 @@ const initialState: AppState = {
   following: [],
   followers: [],
   subscriptions: [],
+  postSubscriptions: [],
 };
 export const appSlice = createSlice({
   name: 'app',
@@ -42,9 +45,13 @@ export const appSlice = createSlice({
     setSavedPostIds: (state, { payload }: { payload: string[] }) => {
       state.savedPostIds = payload;
     },
+    savePostSubscriptions: (state, { payload }: { payload: PostSubscriptions[] }) => {
+      state.postSubscriptions = payload;
+    },
   },
 });
 
-export const { setSavedPostIds, setSubscriptions, setFcmToken, setDashboardContext, setFollowing, setFollowers } = appSlice.actions;
+export const { savePostSubscriptions, setSavedPostIds, setSubscriptions, setFcmToken, setDashboardContext, setFollowing, setFollowers } =
+  appSlice.actions;
 
 export default appSlice.reducer;

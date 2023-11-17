@@ -10,6 +10,9 @@ import SettingsPage from '../../pages/SettingsPage';
 import SubmitPage from '../../pages/SubmitPage';
 import PostPage from '../../pages/PostPage';
 import ProfilePage from '../../pages/ProfilePage';
+import SettingsProfilePage from '../../pages/SettingsPage/SettingsProfilePage';
+import SettingsAppearancePage from '../../pages/SettingsPage/SettingsAppearancePage';
+import SettingsNotificationsPage from '../../pages/SettingsPage/SettingsNotificationsPage';
 const rootRouter = [
   {
     path: '/',
@@ -44,6 +47,20 @@ const rootRouter = [
       {
         path: '/settings',
         element: <SettingsPage />,
+        children: [
+          {
+            path: '/settings/profile',
+            element: <SettingsProfilePage />,
+          },
+          {
+            path: '/settings/appearance',
+            element: <SettingsAppearancePage />,
+          },
+          {
+            path: '/settings/notifications',
+            element: <SettingsNotificationsPage />,
+          },
+        ],
       },
       {
         path: '/profile/:id',

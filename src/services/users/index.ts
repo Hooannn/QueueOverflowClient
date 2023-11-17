@@ -1,13 +1,14 @@
 import { useMutation, useQuery } from 'react-query';
 import { onError } from '../../utils/error-handlers';
-import { IResponseData } from '../../types';
+import { IResponseData, IUser } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { useState } from 'react';
 import { Creator, GetQuery } from '../posts';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import { setFollowers, setFollowing } from '../../slices/app.slice';
-
+import { toast } from '../../components/ui/use-toast';
+import { setUser } from '../../slices/auth.slice';
 export interface Following {
   created_at: string;
   from_uid: string;
@@ -53,6 +54,19 @@ const useUsers = () => {
     },
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: (params: Pick<IUser, 'first_name' | 'last_name' | 'bio' | 'avatar' | 'urls'>) =>
+      axios.patch<IResponseData<IUser>>(`/v1/users/profile`, params),
+    onError,
+    onSuccess: res => {
+      dispatch(setUser(res.data.data));
+      toast({
+        title: 'Success',
+        description: res.data.message || 'Successfully updated your profile',
+      });
+    },
+  });
+
   const followUserMutations = useMutation({
     mutationFn: (to_uid: string) => axios.post(`/v1/users/follow/${to_uid}`),
     onError,
@@ -76,6 +90,7 @@ const useUsers = () => {
     followers,
     followUserMutations,
     unfollowUserMutations,
+    updateProfileMutation,
   };
 };
 

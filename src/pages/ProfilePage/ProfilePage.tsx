@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
 import useUsers from '../../services/users';
@@ -12,6 +11,7 @@ import ProfileHistory from './ProfileHistory';
 import ProfileSaved from './ProfileSaved';
 import ProfileUpvoted from './ProfileUpvoted';
 import ProfileDownvoted from './ProfileDownvoted';
+import MAvatar from '../../components/shared/MAvatar';
 
 export default function ProfilePage() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -19,17 +19,12 @@ export default function ProfilePage() {
     if (!user?.first_name && !user?.last_name) return `User ${user?.id}`;
     return `${user?.first_name} ${user?.last_name}`;
   }, [user]);
-  const dispatch = useDispatch();
-  const shortName = name[0] + name[1];
   const { id } = useParams();
   const isMe = id === user?.id;
   return (
     <div className="flex flex-col">
       <div className="flex flex-col items-center">
-        <Avatar className="h-40 w-40">
-          <AvatarImage src={user?.avatar} alt={shortName} />
-          <AvatarFallback>{shortName}</AvatarFallback>
-        </Avatar>
+        <MAvatar size={40} />
         <div className="mt-2 text-lg">{name}</div>
         <div className="flex items-center justify-center gap-2 mt-8 w-[390px]">
           {isMe ? <ActionForMe /> : <ActionForStranger userId={id ?? ''} />}
@@ -75,7 +70,7 @@ export function ActionForMe() {
   const navigate = useNavigate();
   return (
     <>
-      <Button variant={'secondary'} className="w-1/2" size={'lg'}>
+      <Button onClick={() => navigate('/settings/profile')} variant={'secondary'} className="w-1/2" size={'lg'}>
         Edit
       </Button>
       <Button onClick={() => navigate('/submit')} className="w-1/2" size={'lg'}>

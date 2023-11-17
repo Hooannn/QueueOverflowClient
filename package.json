@@ -45,6 +45,7 @@
     "cmdk": "^0.2.0",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.6",
+    "filestack-react": "^4.0.1",
     "firebase": "^10.5.0",
     "framer-motion": "^7.6.7",
     "i18next": "22.1.2",
@@ -81,6 +82,7 @@
     "zod": "^3.22.2"
   },
   "devDependencies": {
+    "@types/filestack-react": "^4.0.4",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.14.4",
     "@types/react": "^18.0.26",

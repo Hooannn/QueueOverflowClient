@@ -13,6 +13,7 @@ import { FirebaseProvider } from './contexts/FirebaseContext';
 import { SocketProvider } from './contexts/SocketContext';
 import type { FirebaseOptions } from 'firebase/app';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { Toaster } from './components/ui/toaster';
 
 const isDev = import.meta.env.VITE_NODE_ENV === 'dev';
 const persistor = persistStore(store);
@@ -41,5 +42,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       </QueryClientProvider>
     </PersistGate>
     <ToastContainer />
+    <Toaster />
   </Provider>,
 );

@@ -9,6 +9,8 @@ export interface IUser {
   first_name: string;
   last_name: string;
   roles: Role[];
-  avatar?: string;
   password?: string;
+  avatar?: string;
+  bio?: string;
+  urls?: { value: string }[];
 }

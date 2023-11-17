@@ -1,5 +1,4 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +14,7 @@ import { RootState } from '../../@core/store';
 import { useMemo } from 'react';
 import { signOut } from '../../slices/auth.slice';
 import { useNavigate } from 'react-router-dom';
+import MAvatar from '../shared/MAvatar';
 
 export function UserNav() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -23,17 +23,14 @@ export function UserNav() {
     if (!user?.first_name && !user?.last_name) return `User ${user?.id}`;
     return `${user?.first_name} ${user?.last_name}`;
   }, [user]);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const shortName = name[0] + name[1];
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.avatar} alt={shortName} />
-            <AvatarFallback>{shortName}</AvatarFallback>
-          </Avatar>
+          <MAvatar size={10} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

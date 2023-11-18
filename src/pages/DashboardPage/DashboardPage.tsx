@@ -1,11 +1,10 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import { ContextSelect } from './ContextSelect';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import usePosts from '../../services/posts';
 import PostCard from './PostCard';
 import { Card, CardContent } from '../../components/ui/card';
-import { AvatarImage, AvatarFallback, Avatar } from '../../components/ui/avatar';
 import { Input } from '../../components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -13,17 +12,11 @@ import { Image } from 'lucide-react';
 import { Skeleton } from '../../components/ui/skeleton';
 import Empty from '../../components/Empty';
 import SharedDialog from './SharedDialog';
+import MAvatar from '../../components/shared/MAvatar';
 
 export default function DashboardPage() {
   const dashboardContext = useSelector((state: RootState) => state.app.dashboardContext);
-  const user = useSelector((state: RootState) => state.auth.user);
   const { getPostMutation, posts, getPostsQuery } = usePosts();
-  const name = useMemo(() => {
-    if (!user?.first_name && !user?.last_name) return `User ${user?.id}`;
-    return `${user.first_name} ${user.last_name}`;
-  }, [user]);
-
-  const shortName = name[0] + name[1];
   const refetchPostAt = async (postId: string) => {
     const res = await getPostMutation.mutateAsync(postId);
     const updatedPost = res.data.data;
@@ -53,10 +46,7 @@ export default function DashboardPage() {
       <SharedDialog shareUrl={shareUrl} title={shareTitle} onOpenChange={val => setShowSharedDialog(val)} isOpen={shouldShowSharedDialog} />
       <Card className="rounded">
         <CardContent className="p-2 flex items-center justify-center gap-2">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={user?.avatar} alt={shortName} />
-            <AvatarFallback>{shortName}</AvatarFallback>
-          </Avatar>
+          <MAvatar className="h-12 w-12" />
           <Input onClick={() => navigate('/submit')} type="search" placeholder="Create Post" className="w-full h-12" />
           <Button onClick={() => navigate('/submit?media=true')} className="h-12 w-12 p-3" variant={'outline'}>
             <Image size={24} />

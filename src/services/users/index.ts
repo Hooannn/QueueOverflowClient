@@ -55,7 +55,7 @@ const useUsers = () => {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (params: Pick<IUser, 'first_name' | 'last_name' | 'bio' | 'avatar' | 'urls'>) =>
+    mutationFn: (params: Partial<Pick<IUser, 'first_name' | 'last_name' | 'bio' | 'avatar' | 'urls'>>) =>
       axios.patch<IResponseData<IUser>>(`/v1/users/profile`, params),
     onError,
     onSuccess: res => {

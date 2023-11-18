@@ -1,5 +1,3 @@
-import toastConfig from '../../configs/toast';
-import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import cookies from '../../libs/cookies';
 
@@ -13,6 +11,7 @@ import { setLogged, setUser } from '../../slices/auth.slice';
 import dayjs from '../../libs/dayjs';
 import { useState } from 'react';
 import useAxiosIns from '../../hooks/useAxiosIns';
+import { toast } from '../../components/ui/use-toast';
 const useAuth = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -75,7 +74,10 @@ const useAuth = () => {
       });
     },
     onSuccess: data => {
-      toast(data.data.message ?? 'Passcode created and sent to the email!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: data.data.message ?? 'Passcode created and sent to the email!',
+      });
       updateAuthType(AuthFlowType.SignUp);
       if (!shouldShowPasscodeModal) setShowPasscodeModal(true);
     },
@@ -89,7 +91,10 @@ const useAuth = () => {
       });
     },
     onSuccess: data => {
-      toast(data.data.message ?? 'Passcode created and sent to the email!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: data.data.message ?? 'Passcode created and sent to the email!',
+      });
       if (!shouldShowPasscodeModal) setShowPasscodeModal(true);
     },
     onError,
@@ -116,7 +121,10 @@ const useAuth = () => {
 
     onError: onError,
     onSuccess: res => {
-      toast(res.data.message, toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message,
+      });
       const data = res.data?.data;
       const user = data?.user;
       const accessToken = data?.credentials?.access_token;
@@ -133,7 +141,10 @@ const useAuth = () => {
       }),
     onError: onError,
     onSuccess: res => {
-      toast(res.data.message, toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message,
+      });
       const data = res.data?.data;
       const user = data?.user;
       const accessToken = data?.credentials?.access_token;
@@ -146,7 +157,10 @@ const useAuth = () => {
     mutationFn: (code: string) => axios.post<IResponseData<any>>('/auth/github', { code }),
     onError: onError,
     onSuccess: res => {
-      toast(res.data.message, toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message,
+      });
       const data = res.data?.data;
       const user = data?.user;
       const accessToken = data?.credentials?.access_token;

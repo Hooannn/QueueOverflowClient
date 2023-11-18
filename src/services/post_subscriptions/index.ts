@@ -3,11 +3,10 @@ import { onError } from '../../utils/error-handlers';
 import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { Post } from '../posts';
-import { toast } from 'react-toastify';
-import toastConfig from '../../configs/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import { savePostSubscriptions } from '../../slices/app.slice';
+import { toast } from '../../components/ui/use-toast';
 
 export interface PostSubscriptions {
   uid: string;
@@ -38,7 +37,10 @@ const usePostSubscriptions = () => {
     mutationFn: (postId: string) => axios.post<IResponseData<PostSubscriptions>>(`/v1/post_subscriptions`, { post_id: postId }),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Created successfully!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Created successfully!',
+      });
     },
   });
 
@@ -46,7 +48,10 @@ const usePostSubscriptions = () => {
     mutationFn: (postId: string) => axios.delete<IResponseData<any>>(`/v1/post_subscriptions/post/${postId}`),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Deleted!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Deleted!',
+      });
     },
   });
 

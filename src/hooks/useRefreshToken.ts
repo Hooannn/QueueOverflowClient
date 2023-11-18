@@ -1,15 +1,17 @@
 import { useDispatch } from 'react-redux';
-import { toast } from 'react-toastify';
-import toastConfig from '../configs/toast';
 import cookies from '../libs/cookies';
 import { axiosIns } from './useAxiosIns';
 import { signOut } from '../slices/auth.slice';
 import dayjs from '../libs/dayjs';
+import { toast } from '../components/ui/use-toast';
 
 const useRefreshToken = () => {
   const dispatch = useDispatch();
   const handleError = () => {
-    toast('Login session expired, please login again', toastConfig('info'));
+    toast({
+      title: 'Info',
+      description: 'Login session expired, please login again',
+    });
     dispatch(signOut());
     window.location.href = '/auth';
   };

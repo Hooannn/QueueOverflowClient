@@ -12,57 +12,93 @@ import ProfileSaved from './ProfileSaved';
 import ProfileUpvoted from './ProfileUpvoted';
 import ProfileDownvoted from './ProfileDownvoted';
 import MAvatar from '../../components/shared/MAvatar';
+import { useQuery } from 'react-query';
+import useAxiosIns from '../../hooks/useAxiosIns';
+import { IResponseData, IUser } from '../../types';
+import Loading from '../../components/Loading';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 
 export default function ProfilePage() {
+  const axios = useAxiosIns();
   const user = useSelector((state: RootState) => state.auth.user);
-  const name = useMemo(() => {
-    if (!user?.first_name && !user?.last_name) return `User ${user?.id}`;
-    return `${user?.first_name} ${user?.last_name}`;
-  }, [user]);
+
   const { id } = useParams();
   const isMe = id === user?.id;
+
+  const getProfileQuery = useQuery({
+    queryKey: ['fetch/profile', id],
+    queryFn: () => axios.get<IResponseData<IUser>>(`/v1/users/profile/${id}`),
+    enabled: !isMe,
+    refetchOnWindowFocus: false,
+  });
+
+  const isLoading = getProfileQuery.isLoading;
+  const profile = isMe ? user : getProfileQuery.data?.data.data;
+
+  const name = useMemo(() => {
+    if (!profile?.first_name && !profile?.last_name) return `Profile ${profile?.id}`;
+    return `${profile?.first_name} ${profile?.last_name}`;
+  }, [profile]);
+
   return (
-    <div className="flex flex-col">
-      <div className="flex flex-col items-center">
-        <MAvatar size={40} />
-        <div className="mt-2 text-lg">{name}</div>
-        <div className="flex items-center justify-center gap-2 mt-8 w-[390px]">
-          {isMe ? <ActionForMe /> : <ActionForStranger userId={id ?? ''} />}
+    <>
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <Loading />
         </div>
-      </div>
-      <Tabs defaultValue="posts" className="mt-10 w-full flex flex-col items-center">
-        <TabsList>
-          <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="comments">Comments</TabsTrigger>
-          {isMe && (
-            <>
-              <TabsTrigger value="history">History</TabsTrigger>
-              <TabsTrigger value="saved">Saved</TabsTrigger>
-              <TabsTrigger value="upvoted">Upvoted</TabsTrigger>
-              <TabsTrigger value="downvoted">Downvoted</TabsTrigger>
-            </>
-          )}
-        </TabsList>
-        <TabsContent className="self-start" value="posts">
-          <ProfilePosts />
-        </TabsContent>
-        <TabsContent className="self-start" value="comments">
-          <ProfileComments />
-        </TabsContent>
-        <TabsContent className="self-start" value="history">
-          <ProfileHistory />
-        </TabsContent>
-        <TabsContent className="self-start" value="saved">
-          <ProfileSaved />
-        </TabsContent>
-        <TabsContent className="self-start" value="upvoted">
-          <ProfileUpvoted />
-        </TabsContent>
-        <TabsContent className="self-start" value="downvoted">
-          <ProfileDownvoted />
-        </TabsContent>
-      </Tabs>
-    </div>
+      ) : (
+        <div className="flex flex-col">
+          <div className="flex flex-col items-center">
+            <Avatar className="w-40 h-40">
+              <AvatarImage src={profile?.avatar} alt={name[0] + name[1]} />
+              <AvatarFallback>{name[0] + name[1]}</AvatarFallback>
+            </Avatar>
+            <h3 className="text-lg mt-2 font-medium">{name}</h3>
+            {profile?.bio && <p className="text-sm text-muted-foreground">{profile.bio}</p>}
+            {profile?.urls?.map(url => (
+              <a className="text-sm hover:underline transition" target="_blank" href={url.value}>
+                {url.value}
+              </a>
+            ))}
+            <div className="flex items-center justify-center gap-2 mt-8 w-[390px]">
+              {isMe ? <ActionForMe /> : <ActionForStranger userId={id ?? ''} />}
+            </div>
+          </div>
+          <Tabs defaultValue="posts" className="mt-10 w-full flex flex-col items-center">
+            <TabsList>
+              <TabsTrigger value="posts">Posts</TabsTrigger>
+              <TabsTrigger value="comments">Comments</TabsTrigger>
+              {isMe && (
+                <>
+                  <TabsTrigger value="history">History</TabsTrigger>
+                  <TabsTrigger value="saved">Saved</TabsTrigger>
+                  <TabsTrigger value="upvoted">Upvoted</TabsTrigger>
+                  <TabsTrigger value="downvoted">Downvoted</TabsTrigger>
+                </>
+              )}
+            </TabsList>
+            <TabsContent className="self-start" value="posts">
+              <ProfilePosts />
+            </TabsContent>
+            <TabsContent className="self-start" value="comments">
+              <ProfileComments />
+            </TabsContent>
+            <TabsContent className="self-start" value="history">
+              <ProfileHistory />
+            </TabsContent>
+            <TabsContent className="self-start" value="saved">
+              <ProfileSaved />
+            </TabsContent>
+            <TabsContent className="self-start" value="upvoted">
+              <ProfileUpvoted />
+            </TabsContent>
+            <TabsContent className="self-start" value="downvoted">
+              <ProfileDownvoted />
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
+    </>
   );
 }
 

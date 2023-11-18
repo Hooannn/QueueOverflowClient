@@ -4,11 +4,10 @@ import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { useState } from 'react';
 import { GetQuery, Post } from '../posts';
-import { toast } from 'react-toastify';
-import toastConfig from '../../configs/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSavedPostIds } from '../../slices/app.slice';
 import { RootState } from '../../@core/store';
+import { toast } from '../../components/ui/use-toast';
 
 export interface SavedPost {
   uid: string;
@@ -53,7 +52,10 @@ const useSavedPosts = (enabledAutoFetch = true) => {
     mutationFn: (postId: string) => axios.post<IResponseData<SavedPost>>(`/v1/saved_posts`, { post_id: postId }),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Created successfully!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Created successfully!',
+      });
     },
   });
 
@@ -61,7 +63,10 @@ const useSavedPosts = (enabledAutoFetch = true) => {
     mutationFn: (postId: string) => axios.delete<IResponseData<any>>(`/v1/saved_posts/post/${postId}`),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Deleted!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Deleted!',
+      });
     },
   });
 

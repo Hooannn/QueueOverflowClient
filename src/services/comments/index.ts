@@ -3,8 +3,7 @@ import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { onError } from '../../utils/error-handlers';
 import { Comment } from '../posts';
-import toastConfig from '../../configs/toast';
-import { toast } from 'react-toastify';
+import { toast } from '../../components/ui/use-toast';
 const useComments = () => {
   const axios = useAxiosIns();
 
@@ -12,7 +11,10 @@ const useComments = () => {
     mutationFn: (params: { content: string; post_id: string; parent_id?: string }) => axios.post<IResponseData<Comment>>(`/v1/comments`, params),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Submited successfully!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Submited successfully!',
+      });
     },
   });
 
@@ -32,7 +34,10 @@ const useComments = () => {
     mutationFn: (commentId: string) => axios.delete<IResponseData<unknown>>(`/v1/comments/${commentId}`),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Deleted successfully!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Deleted successfully!',
+      });
     },
   });
 

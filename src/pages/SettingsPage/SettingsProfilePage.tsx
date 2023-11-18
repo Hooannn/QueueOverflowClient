@@ -77,7 +77,7 @@ export default function SettingsProfilePage() {
         <p className="text-sm text-muted-foreground">This is how others will see you on the site.</p>
       </div>
       <Separator />
-      <MAvatar editable />
+      <MAvatar editable className="w-32 h-32 mx-auto relative" />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField

@@ -3,8 +3,7 @@ import { onError } from '../../utils/error-handlers';
 import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { useState } from 'react';
-import { toast } from 'react-toastify';
-import toastConfig from '../../configs/toast';
+import { toast } from '../../components/ui/use-toast';
 export enum VoteType {
   Up,
   Down,
@@ -116,7 +115,10 @@ const usePosts = (enabledAutoFetch = true) => {
       axios.post<IResponseData<Post>>(`/v1/posts`, params),
     onError,
     onSuccess: res => {
-      toast(res.data.message ?? 'Created successfully!', toastConfig('success'));
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Created successfully!',
+      });
     },
   });
 

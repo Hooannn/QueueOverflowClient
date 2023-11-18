@@ -2,7 +2,6 @@ import { PropsWithChildren, createContext, useContext, useEffect, useState } fro
 import toastConfig from '../configs/toast';
 import * as firebase from 'firebase/app';
 import { Messaging, getMessaging, getToken, onMessage } from 'firebase/messaging';
-import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../@core/store';
 import { setFcmToken as setSavedFcmToken } from '../slices/app.slice';
@@ -10,6 +9,7 @@ import { useMutation } from 'react-query';
 import useAxiosIns from '../hooks/useAxiosIns';
 import { IResponseData } from '../types';
 import { onError } from '../utils/error-handlers';
+import { toast } from '../components/ui/use-toast';
 const FirebaseContext = createContext<firebase.FirebaseApp | null>(null);
 
 export const useFirebase = () => {
@@ -49,7 +49,11 @@ export const FirebaseProvider = ({ children, config }: PropsWithChildren<{ confi
         setFcmToken(token);
       })
       .catch(err => {
-        toast(err.message || JSON.stringify(err), toastConfig('error'));
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: err.message || JSON.stringify(err),
+        });
       });
   }, [firebaseApp, isLogged]);
 

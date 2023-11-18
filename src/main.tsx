@@ -1,10 +1,8 @@
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import 'react-toastify/dist/ReactToastify.css';
 import { RouterProvider } from 'react-router-dom';
 import { store } from './@core/store';
 import { Provider } from 'react-redux';
-import { ToastContainer } from 'react-toastify';
 import getRouter from './@core/router/index';
 import { persistStore } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -41,7 +39,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         </FirebaseProvider>
       </QueryClientProvider>
     </PersistGate>
-    <ToastContainer />
     <Toaster />
   </Provider>,
 );

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import {
   FacebookShareButton,
   FacebookIcon,
@@ -15,8 +15,7 @@ import {
 } from 'react-share';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
-import { toast } from 'react-toastify';
-import toastConfig from '../../configs/toast';
+import { toast } from '../../components/ui/use-toast';
 
 export default function SharedDialog({
   shareUrl,
@@ -33,10 +32,17 @@ export default function SharedDialog({
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
-        toast('Copied to clipboard', toastConfig('success'));
+        toast({
+          title: 'Success',
+          description: 'Copied to clipboard',
+        });
       })
       .catch(error => {
-        toast(error.message ?? 'Failed to copy to clipboard', toastConfig('error'));
+        toast({
+          title: 'Error',
+          variant: 'destructive',
+          description: error.message ?? 'Failed to copy to clipboard',
+        });
       });
   };
 

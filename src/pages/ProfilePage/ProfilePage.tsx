@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import { Button } from '../../components/ui/button';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useUsers from '../../services/users';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import ProfilePosts from './ProfilePosts';
@@ -11,7 +11,6 @@ import ProfileHistory from './ProfileHistory';
 import ProfileSaved from './ProfileSaved';
 import ProfileUpvoted from './ProfileUpvoted';
 import ProfileDownvoted from './ProfileDownvoted';
-import MAvatar from '../../components/shared/MAvatar';
 import { useQuery } from 'react-query';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { IResponseData, IUser } from '../../types';
@@ -40,6 +39,17 @@ export default function ProfilePage() {
     return `${profile?.first_name} ${profile?.last_name}`;
   }, [profile]);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tabValue, setTabValue] = useState<string>();
+
+  useEffect(() => {
+    if (!searchParams.has('tab')) {
+      setTabValue('posts');
+    } else {
+      setTabValue(searchParams.get('tab') as string);
+    }
+  }, []);
+
   return (
     <>
       {isLoading ? (
@@ -64,7 +74,16 @@ export default function ProfilePage() {
               {isMe ? <ActionForMe /> : <ActionForStranger userId={id ?? ''} />}
             </div>
           </div>
-          <Tabs defaultValue="posts" className="mt-10 w-full flex flex-col items-center">
+          <Tabs
+            onValueChange={value => {
+              searchParams.set('tab', value);
+              setSearchParams(searchParams);
+              setTabValue(value);
+            }}
+            value={tabValue}
+            defaultValue="posts"
+            className="mt-10 w-full flex flex-col items-center"
+          >
             <TabsList>
               <TabsTrigger value="posts">Posts</TabsTrigger>
               <TabsTrigger value="comments">Comments</TabsTrigger>
@@ -77,22 +96,22 @@ export default function ProfilePage() {
                 </>
               )}
             </TabsList>
-            <TabsContent className="self-start" value="posts">
+            <TabsContent className="self-start w-full" value="posts">
               <ProfilePosts />
             </TabsContent>
-            <TabsContent className="self-start" value="comments">
+            <TabsContent className="self-start w-full" value="comments">
               <ProfileComments />
             </TabsContent>
-            <TabsContent className="self-start" value="history">
+            <TabsContent className="self-start w-full" value="history">
               <ProfileHistory />
             </TabsContent>
-            <TabsContent className="self-start" value="saved">
+            <TabsContent className="self-start w-full" value="saved">
               <ProfileSaved />
             </TabsContent>
-            <TabsContent className="self-start" value="upvoted">
+            <TabsContent className="self-start w-full" value="upvoted">
               <ProfileUpvoted />
             </TabsContent>
-            <TabsContent className="self-start" value="downvoted">
+            <TabsContent className="self-start w-full" value="downvoted">
               <ProfileDownvoted />
             </TabsContent>
           </Tabs>

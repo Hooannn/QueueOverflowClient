@@ -50,6 +50,7 @@ export interface Comment {
   meta_data?: any;
   post_id: string;
   creator?: Creator;
+  post?: Post;
   votes?: Vote[];
 }
 

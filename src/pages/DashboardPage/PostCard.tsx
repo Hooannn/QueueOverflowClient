@@ -38,6 +38,7 @@ import Empty from '../../components/Empty';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import useSavedPosts from '../../services/saved_posts';
 import usePostSubscriptions from '../../services/post_subscriptions';
+import CommentCard from './CommentCard';
 export default function PostCard(props: {
   showSharedDialog: (postId: string, postTitle: string) => void;
   isPreview: boolean;
@@ -188,13 +189,19 @@ export default function PostCard(props: {
             </div>
           )}
           <ChevronUpCircle
-            onClick={upvote}
+            onClick={e => {
+              e.stopPropagation();
+              upvote();
+            }}
             size={28}
             className={`${vote && vote.type === VoteType.Up ? 'text-red-400' : ''} rounded-full hover:text-red-400 cursor-pointer transition`}
           />
           <div className="text-center">{votePoints}</div>
           <ChevronDownCircle
-            onClick={downvote}
+            onClick={e => {
+              e.stopPropagation();
+              downvote();
+            }}
             size={28}
             className={`${vote && vote.type === VoteType.Down ? 'text-red-400' : ''} rounded-full hover:text-red-400 cursor-pointer transition`}
           />
@@ -330,7 +337,7 @@ export function CommentSection(props: { postId: string; creator: Creator; commen
         {props.comments?.length > 0 ? (
           <>
             {props.comments.map(comment => (
-              <CommentCard key={comment.id} comment={comment} postId={props.postId} />
+              <CommentCard isPreview={false} key={comment.id} comment={comment} postId={props.postId} />
             ))}
           </>
         ) : (
@@ -338,120 +345,6 @@ export function CommentSection(props: { postId: string; creator: Creator; commen
             <Empty text="No comments." />
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-export function CommentCard({ comment, postId }: { comment: Comment; postId: string }) {
-  const queryClient = useQueryClient();
-  const { upvoteCommentMutation, downvoteCommentMutation, removeCommentMutation } = useComments();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const vote = useMemo(() => comment.votes?.find(v => v.uid === user?.id), [comment, user]);
-  const votePoints = useMemo(
-    () =>
-      comment.votes?.reduce((prev, current) => {
-        if (current.type === VoteType.Up) prev++;
-        else prev--;
-        return prev;
-      }, 0),
-    [comment],
-  );
-  const name = useMemo(() => {
-    if (!comment.creator?.first_name && !comment.creator?.last_name) return `User ${comment.creator?.id}`;
-    return `${comment.creator?.first_name} ${comment.creator?.last_name}`;
-  }, [comment]);
-
-  const shortName = name[0] + name[1];
-
-  const remove = () => {
-    removeCommentMutation.mutateAsync(comment.id).then(() => {
-      queryClient.invalidateQueries({
-        queryKey: ['fetch/post', postId],
-      });
-    });
-  };
-  const upvote = () => {
-    upvoteCommentMutation.mutateAsync({ commentId: comment.id, postId }).then(() => {
-      queryClient.invalidateQueries({
-        queryKey: ['fetch/post', postId],
-      });
-    });
-  };
-
-  const downvote = () => {
-    downvoteCommentMutation.mutateAsync({ commentId: comment.id, postId }).then(() => {
-      queryClient.invalidateQueries({
-        queryKey: ['fetch/post', postId],
-      });
-    });
-  };
-
-  const isVoting = upvoteCommentMutation.isLoading || downvoteCommentMutation.isLoading;
-  return (
-    <div className="flex items-start gap-4 post-card">
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={comment.creator?.avatar} alt={shortName} />
-        <AvatarFallback>{shortName}</AvatarFallback>
-      </Avatar>
-      <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <CreatorCard creator={comment.creator as Creator} />
-            <DotFilledIcon className="w-2 h-2" color="grey" />
-            <div className="text-xs text-muted-foreground mt-1">{dayjs(comment.created_at).fromNow()}</div>
-          </div>
-          {user?.id === comment.created_by && (
-            <Popover>
-              <PopoverTrigger>
-                <Button size={'icon'} variant={'ghost'}>
-                  <DotsVerticalIcon />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-2 w-52">
-                <div className="flex flex-col">
-                  <Button
-                    isLoading={removeCommentMutation.isLoading}
-                    disabled={removeCommentMutation.isLoading}
-                    onClick={remove}
-                    variant={'ghost'}
-                    className="justify-start"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-        <ReactQuill className="rounded" readOnly theme="snow" modules={{ toolbar: false }} formats={formats} value={comment.content} />
-        <div className="flex gap-2 mt-2">
-          <div className="flex items-center gap-2">
-            <Button
-              isLoading={isVoting}
-              disabled={isVoting}
-              onClick={upvote}
-              variant={vote && vote.type === VoteType.Up ? 'default' : 'secondary'}
-              size={'icon'}
-            >
-              <ChevronUpIcon />
-            </Button>
-            <strong>{votePoints}</strong>
-            <Button
-              disabled={isVoting}
-              isLoading={isVoting}
-              variant={vote && vote.type === VoteType.Down ? 'default' : 'secondary'}
-              onClick={downvote}
-              size={'icon'}
-            >
-              <ChevronDownIcon />
-            </Button>
-          </div>
-          <Button variant="secondary">
-            <ChatBubbleIcon className="mr-2" />
-            Reply
-          </Button>
-        </div>
       </div>
     </div>
   );

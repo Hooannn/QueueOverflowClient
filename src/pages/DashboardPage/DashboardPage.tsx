@@ -33,7 +33,7 @@ export default function DashboardPage() {
 
   const showShareDialog = (postId: string, postTitle: string) => {
     setShowSharedDialog(true);
-    setShareUrl(`${window.location.href}post/${postId}`);
+    setShareUrl(`${window.location.origin}/post/${postId}`);
     setShareTitle(postTitle);
   };
 

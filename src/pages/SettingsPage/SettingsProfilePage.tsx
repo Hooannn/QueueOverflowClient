@@ -162,7 +162,7 @@ export default function SettingsProfilePage() {
               Add URL
             </Button>
           </div>
-          <Button isLoading={updateProfileMutation.isLoading} type="submit">
+          <Button size={'lg'} isLoading={updateProfileMutation.isLoading} type="submit">
             Update profile
           </Button>
         </form>

@@ -15,6 +15,7 @@ import { useMemo } from 'react';
 import { signOut } from '../../slices/auth.slice';
 import { useNavigate } from 'react-router-dom';
 import MAvatar from '../shared/MAvatar';
+import useAuth from '../../services/auth';
 
 export function UserNav() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -26,6 +27,7 @@ export function UserNav() {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { signOutMutation } = useAuth();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -57,7 +59,7 @@ export function UserNav() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => dispatch(signOut())}>
+        <DropdownMenuItem disabled={signOutMutation.isLoading} onClick={() => signOutMutation.mutate()}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

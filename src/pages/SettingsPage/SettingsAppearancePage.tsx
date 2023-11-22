@@ -110,7 +110,9 @@ export default function SettingsAppearancePage() {
             )}
           />
 
-          <Button type="submit">Update preferences</Button>
+          <Button size={'lg'} type="submit">
+            Update preferences
+          </Button>
         </form>
       </Form>
     </div>

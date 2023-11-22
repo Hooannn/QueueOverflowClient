@@ -2,17 +2,27 @@ import { BellIcon, CheckCheck, Settings, Trash } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import useNotifications, { Notification } from '../../services/notifications';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import dayjs from '../../libs/dayjs';
 import { useNavigate } from 'react-router-dom';
 import { DotFilledIcon } from '@radix-ui/react-icons';
+import Empty from '../Empty';
+import { formats } from '../../configs/quill';
+import ReactQuill from 'react-quill';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export function NotificationBell() {
-  const { notifications, unreadNotificationsCount, getNotificationsQuery, markAllNotificationsMutation, deleteAllNotificationsMutation } =
-    useNotifications();
+  const {
+    markNotificationMutation,
+    notifications,
+    unreadNotificationsCount,
+    getNotificationsQuery,
+    markAllNotificationsMutation,
+    deleteAllNotificationsMutation,
+  } = useNotifications();
   const navigate = useNavigate();
 
   const ACTIONS = [
@@ -87,14 +97,17 @@ export function NotificationBell() {
               {notifications && notifications!.length > 0 ? (
                 <>
                   {notifications?.map(notification => (
-                    <NotificationCard key={notification.id} notification={notification} />
+                    <NotificationCard
+                      onMark={id => {
+                        markNotificationMutation.mutate(id);
+                      }}
+                      key={notification.id}
+                      notification={notification}
+                    />
                   ))}
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center py-4">
-                  <img src="/Empty_Noti.svg" className="w-1/2" />
-                  <small className="text-muted-foreground">No data.</small>
-                </div>
+                <Empty />
               )}
             </div>
           )}
@@ -108,15 +121,32 @@ export function NotificationBell() {
   );
 }
 
-export function NotificationCard(props: { notification: Notification }) {
+export function NotificationCard(props: { notification: Notification; onMark: (notificationId: string) => void }) {
   const name = useMemo(() => {
     if (!props.notification.creator?.first_name && !props.notification.creator?.last_name) return `User ${props.notification.creator?.id}`;
     return `${props.notification.creator?.first_name} ${props.notification.creator?.last_name}`;
   }, [props.notification]);
-
   const shortName = name[0] + name[1];
+
+  const { raw } = useTheme();
+  const [contentHeight, setContentHeight] = useState();
+
+  const quillRef = useRef<ReactQuill>(null);
+  useEffect(() => {
+    if (quillRef.current) {
+      const clientHeight = (quillRef.current.editingArea as any)?.clientHeight;
+      setContentHeight(clientHeight);
+    }
+  }, []);
   return (
-    <div className={`hover:scale-[0.99] flex gap-3 items-center rounded-lg cursor-pointer transition p-2 ${props.notification.read ? '' : ''}`}>
+    <div
+      onClick={e => {
+        e.stopPropagation();
+        props.onMark(props.notification.id);
+        window.location.href = props.notification.meta_data?.action_url;
+      }}
+      className={`hover:scale-[0.99] flex gap-3 items-center rounded-lg cursor-pointer transition p-2 ${props.notification.read ? '' : ''}`}
+    >
       <Avatar className="h-10 w-10">
         <AvatarImage src={props.notification.creator?.avatar} alt={shortName} />
         <AvatarFallback>{shortName}</AvatarFallback>
@@ -126,7 +156,22 @@ export function NotificationCard(props: { notification: Notification }) {
         <div className="text-sm">
           <span className="font-bold">{props.notification.title}</span>
         </div>
-        <div className="text-sm">{props.notification.content}</div>
+        <div className="text-sm post-card relative">
+          <ReactQuill
+            ref={quillRef}
+            className="rounded p-0 max-h-[150px] overflow-hidden"
+            readOnly
+            theme="snow"
+            modules={{ toolbar: false }}
+            formats={formats}
+            value={props.notification.content}
+          />
+          {contentHeight && contentHeight >= 250 && (
+            <div className="absolute w-full left-0 bottom-0">
+              <div className={`w-full h-8 ${raw === 'dark' ? 'overlay-dark' : 'overlay-light'}`}></div>
+            </div>
+          )}
+        </div>
         <div className="text-xs text-muted-foreground mt-1">{dayjs(props.notification.created_at).fromNow()}</div>
       </div>
 

@@ -13,6 +13,7 @@ import ProfilePage from '../../pages/ProfilePage';
 import SettingsProfilePage from '../../pages/SettingsPage/SettingsProfilePage';
 import SettingsAppearancePage from '../../pages/SettingsPage/SettingsAppearancePage';
 import SettingsNotificationsPage from '../../pages/SettingsPage/SettingsNotificationsPage';
+import SettingsPasswordPage from '../../pages/SettingsPage/SettingsPasswordPage';
 const rootRouter = [
   {
     path: '/',
@@ -51,6 +52,10 @@ const rootRouter = [
           {
             path: '/settings/profile',
             element: <SettingsProfilePage />,
+          },
+          {
+            path: '/settings/password',
+            element: <SettingsPasswordPage />,
           },
           {
             path: '/settings/appearance',

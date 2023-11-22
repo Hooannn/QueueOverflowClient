@@ -1,16 +1,21 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useState } from 'react';
-import toastConfig from '../configs/toast';
 import * as firebase from 'firebase/app';
-import { Messaging, getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, deleteToken } from 'firebase/messaging';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../@core/store';
-import { setFcmToken as setSavedFcmToken } from '../slices/app.slice';
+import { setEnabledPushNotifications, setFcmToken as setSavedFcmToken } from '../slices/app.slice';
 import { useMutation } from 'react-query';
 import useAxiosIns from '../hooks/useAxiosIns';
 import { IResponseData } from '../types';
 import { onError } from '../utils/error-handlers';
 import { toast } from '../components/ui/use-toast';
-const FirebaseContext = createContext<firebase.FirebaseApp | null>(null);
+const FirebaseContext = createContext<{
+  instance: firebase.FirebaseApp | null;
+  disabledPushNotifications?: (toastOnFinishing: boolean) => Promise<void>;
+  enabledPushNotifications?: (toastOnFinishing: boolean) => Promise<void>;
+}>({
+  instance: null,
+});
 
 export const useFirebase = () => {
   return useContext(FirebaseContext);
@@ -18,10 +23,9 @@ export const useFirebase = () => {
 
 export const FirebaseProvider = ({ children, config }: PropsWithChildren<{ config: firebase.FirebaseOptions }>) => {
   const [firebaseApp, setFirebaseApp] = useState<firebase.FirebaseApp | null>(null);
-  const [fcmToken, setFcmToken] = useState<string>();
   const dispatch = useDispatch();
   const isLogged = useSelector((state: RootState) => state.auth.isLogged);
-  const savedFcmToken = useSelector((state: RootState) => state.app.fcmToken);
+  const isEnabledPushNotifications = useSelector((state: RootState) => state.app.enabledPushNotifications);
   const axios = useAxiosIns();
 
   const registerFcmTokenMutation = useMutation({
@@ -29,32 +33,59 @@ export const FirebaseProvider = ({ children, config }: PropsWithChildren<{ confi
     onError: onError,
   });
 
-  useEffect(() => {
-    if (fcmToken && fcmToken !== savedFcmToken) {
-      registerFcmTokenMutation.mutateAsync(fcmToken).then(() => {
-        dispatch(setSavedFcmToken(fcmToken));
-      });
+  const disabledPushNotifications = async (toastOnFinishing: boolean) => {
+    if (firebaseApp) {
+      await deleteToken(getMessaging(firebaseApp));
+      dispatch(setEnabledPushNotifications(false));
+      if (toastOnFinishing)
+        toast({
+          title: 'Success',
+          description: 'Disabled push notifications',
+        });
     }
-  }, [fcmToken]);
+  };
+
+  const enabledPushNotifications = async (toastOnFinishing: boolean) => {
+    if (firebaseApp) {
+      const res = new Promise<void>((resolve, reject) => {
+        getToken(getMessaging(firebaseApp), {
+          vapidKey: 'BOO_V42pfMSOmGKaXoKqnUbGL1KdD9p4p7Xw3cyhCj6kH4xxn6BWiD7ZdmRsXJ-Av6iYzdWEHu6efV7NHb6Yvk0',
+        })
+          .then(token => {
+            resolve();
+            dispatch(setEnabledPushNotifications(true));
+            registerFcmTokenMutation.mutateAsync(token).then(() => {
+              dispatch(setSavedFcmToken(token));
+            });
+            if (toastOnFinishing)
+              toast({
+                title: 'Success',
+                description: 'Enabled push notifications',
+              });
+          })
+          .catch(err => {
+            reject(err.message);
+            dispatch(setEnabledPushNotifications(false));
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: err.message || JSON.stringify(err),
+            });
+          });
+      });
+
+      onMessage(getMessaging(firebaseApp), payload => {
+        console.log('Message received. ', payload);
+        // ...
+      });
+
+      return res;
+    }
+  };
 
   useEffect(() => {
     if (!isLogged || !firebaseApp) return;
-    const messaging = getMessaging(firebaseApp);
-    onMessage(messaging, payload => {
-      console.log('Message received. ', payload);
-      // ...
-    });
-    getToken(messaging, { vapidKey: 'BOO_V42pfMSOmGKaXoKqnUbGL1KdD9p4p7Xw3cyhCj6kH4xxn6BWiD7ZdmRsXJ-Av6iYzdWEHu6efV7NHb6Yvk0' })
-      .then(token => {
-        setFcmToken(token);
-      })
-      .catch(err => {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: err.message || JSON.stringify(err),
-        });
-      });
+    if (isEnabledPushNotifications) enabledPushNotifications(false);
   }, [firebaseApp, isLogged]);
 
   useEffect(() => {
@@ -66,5 +97,9 @@ export const FirebaseProvider = ({ children, config }: PropsWithChildren<{ confi
     return () => {};
   }, [config, firebaseApp]);
 
-  return <FirebaseContext.Provider value={firebaseApp}>{children}</FirebaseContext.Provider>;
+  return (
+    <FirebaseContext.Provider value={{ instance: firebaseApp, disabledPushNotifications, enabledPushNotifications }}>
+      {children}
+    </FirebaseContext.Provider>
+  );
 };

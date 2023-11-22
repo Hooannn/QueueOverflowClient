@@ -19,7 +19,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
       name: 'Notifications',
     },
     {
-      path: '/settings',
+      path: '/settings/profile',
       name: 'Settings',
     },
   ];

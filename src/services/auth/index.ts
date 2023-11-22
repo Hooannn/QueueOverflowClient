@@ -7,11 +7,12 @@ import { IResponseData, IUser } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../@core/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { setLogged, setUser } from '../../slices/auth.slice';
+import { setLogged, setUser, signOut } from '../../slices/auth.slice';
 import dayjs from '../../libs/dayjs';
 import { useState } from 'react';
 import useAxiosIns from '../../hooks/useAxiosIns';
 import { toast } from '../../components/ui/use-toast';
+import { clearAppState } from '../../slices/app.slice';
 const useAuth = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -39,15 +40,6 @@ const useAuth = () => {
     updateAuthType(undefined);
     updatePasscode('');
   };
-
-  const renewPasscode = useMutation({
-    mutationFn: () => {
-      const base64 = btoa(email ?? '');
-      return axios.get<IResponseData<any>>(`/auth?email=${base64}`);
-    },
-    onError,
-    onSuccess: () => {},
-  });
 
   const checkUser = useMutation({
     mutationFn: () => {
@@ -109,6 +101,23 @@ const useAuth = () => {
     clearInput();
     navigate(redirectPath as string);
   };
+
+  const signOutMutation = useMutation({
+    mutationFn: () => {
+      return axios.post<IResponseData<any>>(`/auth/sign-out`, {
+        client: 'web',
+      });
+    },
+    onError: onError,
+    onSuccess: res => {
+      toast({
+        title: 'Success',
+        description: res.data.message || 'Signed out successfully',
+      });
+      dispatch(signOut());
+      dispatch(clearAppState());
+    },
+  });
 
   const signInMutation = useMutation({
     mutationFn: (isRenewPassword: boolean) => {
@@ -182,6 +191,7 @@ const useAuth = () => {
     setShowPasscodeModal,
     renewPassword,
     signInWithGithubMutation,
+    signOutMutation,
   };
 };
 

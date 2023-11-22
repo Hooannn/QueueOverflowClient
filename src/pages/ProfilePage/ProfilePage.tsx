@@ -81,7 +81,6 @@ export default function ProfilePage() {
               setTabValue(value);
             }}
             value={tabValue}
-            defaultValue="posts"
             className="mt-10 w-full flex flex-col items-center"
           >
             <TabsList>

@@ -58,7 +58,7 @@ const useNotifications = () => {
     },
   });
 
-  const markAllNotificationMutation = useMutation({
+  const markNotificationMutation = useMutation({
     mutationFn: (notificationId: string) => axios.patch<IResponseData<unknown>>(`/v1/notifications/mark/${notificationId}`),
     onError,
     onSuccess: () => {
@@ -91,7 +91,7 @@ const useNotifications = () => {
     getUnreadNotificationsCountQuery,
     refresh,
     markAllNotificationsMutation,
-    markAllNotificationMutation,
+    markNotificationMutation,
     deleteAllNotificationsMutation,
   };
 };

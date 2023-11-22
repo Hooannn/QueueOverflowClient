@@ -4,8 +4,21 @@ import { AuthFlowType } from '../../slices/auth-flow.slice';
 import PasscodeDialog from './PasscodeDialog';
 import { UserAuthForm } from './UserAuthForm';
 import { useSearchParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import cookies from '../../libs/cookies';
+import { signOut } from '../../slices/auth.slice';
+import { clearAppState } from '../../slices/app.slice';
 export default function AuthenticationPage() {
-  const { checkUser, shouldShowPasscodeModal, setShowPasscodeModal, authType, signInMutation, signUpMutation, signInWithGithubMutation } = useAuth();
+  const {
+    signOutMutation,
+    checkUser,
+    shouldShowPasscodeModal,
+    setShowPasscodeModal,
+    authType,
+    signInMutation,
+    signUpMutation,
+    signInWithGithubMutation,
+  } = useAuth();
   const onFinished = (isRenewPassword: boolean) => {
     switch (authType) {
       case AuthFlowType.SignIn:
@@ -16,6 +29,8 @@ export default function AuthenticationPage() {
         break;
     }
   };
+  const dispatch = useDispatch();
+  const accessToken = cookies.get('access_token');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const githubCode = searchParams.get('code');
@@ -27,6 +42,18 @@ export default function AuthenticationPage() {
       setSearchParams(searchParams);
     }
   }, [githubCode]);
+
+  const doSignOutIfNotYet = async () => {
+    if (accessToken) await signOutMutation.mutateAsync();
+    else {
+      dispatch(signOut());
+      dispatch(clearAppState());
+    }
+  };
+
+  useEffect(() => {
+    doSignOutIfNotYet();
+  }, []);
 
   return (
     <>

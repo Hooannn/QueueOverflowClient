@@ -6,6 +6,7 @@ import { PostSubscriptions } from '../services/post_subscriptions';
 export type DashboardContext = 'best' | 'hot' | 'new' | 'top';
 export interface AppState {
   fcmToken?: string;
+  enabledPushNotifications: boolean;
   dashboardContext: DashboardContext;
   following: Following[];
   followers: Follower[];
@@ -16,6 +17,7 @@ export interface AppState {
 
 const initialState: AppState = {
   fcmToken: undefined,
+  enabledPushNotifications: true,
   dashboardContext: 'best',
   savedPostIds: [],
   following: [],
@@ -48,10 +50,25 @@ export const appSlice = createSlice({
     savePostSubscriptions: (state, { payload }: { payload: PostSubscriptions[] }) => {
       state.postSubscriptions = payload;
     },
+    setEnabledPushNotifications: (state, { payload }: { payload: boolean }) => {
+      state.enabledPushNotifications = payload;
+    },
+    clearAppState: () => {
+      return initialState;
+    },
   },
 });
 
-export const { savePostSubscriptions, setSavedPostIds, setSubscriptions, setFcmToken, setDashboardContext, setFollowing, setFollowers } =
-  appSlice.actions;
+export const {
+  clearAppState,
+  savePostSubscriptions,
+  setSavedPostIds,
+  setSubscriptions,
+  setFcmToken,
+  setDashboardContext,
+  setFollowing,
+  setFollowers,
+  setEnabledPushNotifications,
+} = appSlice.actions;
 
 export default appSlice.reducer;

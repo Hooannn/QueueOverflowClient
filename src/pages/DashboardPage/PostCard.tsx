@@ -12,16 +12,7 @@ import { RootState } from '../../@core/store';
 import useUsers from '../../services/users';
 import { useNavigate } from 'react-router-dom';
 import { Icons } from '../../components/icons';
-import {
-  BookmarkIcon,
-  ChatBubbleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  DotFilledIcon,
-  DotsVerticalIcon,
-  EyeOpenIcon,
-  Share2Icon,
-} from '@radix-ui/react-icons';
+import { BookmarkIcon, ChatBubbleIcon, DotsVerticalIcon, EyeOpenIcon, Share2Icon } from '@radix-ui/react-icons';
 import useSubscriptions from '../../services/subscriptions';
 import { useQuery, useQueryClient } from 'react-query';
 import useAxiosIns from '../../hooks/useAxiosIns';
@@ -30,22 +21,21 @@ import { Skeleton } from '../../components/ui/skeleton';
 import ReactQuill from 'react-quill';
 import './PostCard.css';
 import { useTheme } from '../../contexts/ThemeContext';
-import { formats } from '../../configs/quill';
 import { Separator } from '../../components/ui/separator';
 import useComments from '../../services/comments';
 import { onError } from '../../utils/error-handlers';
 import Empty from '../../components/Empty';
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import useSavedPosts from '../../services/saved_posts';
 import usePostSubscriptions from '../../services/post_subscriptions';
 import CommentCard from './CommentCard';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 export default function PostCard(props: {
   showSharedDialog: (postId: string, postTitle: string) => void;
   isPreview: boolean;
   post: Post;
   refetchPostAt: (postId: string) => void;
 }) {
-  const { upvoteMutation, downvoteMutation } = usePosts(false);
+  const { upvoteMutation, downvoteMutation, removePostMutation } = usePosts(false);
   const { createSavedPostMutation, removeSavedPostMutation, savedPostIds, getSavedPostIdsQuery } = useSavedPosts(false);
   const navigate = useNavigate();
   const { subscriptions } = useSubscriptions();
@@ -109,6 +99,10 @@ export default function PostCard(props: {
       }, 0),
     [props.post],
   );
+
+  const remove = () => {
+    removePostMutation.mutateAsync(props.post.id);
+  };
 
   const ACTIONS =
     user?.id === props.post.created_by
@@ -207,7 +201,31 @@ export default function PostCard(props: {
           />
         </div>
         <div className="w-full">
-          <CardHeader>
+          <CardHeader className="relative">
+            {user?.id === props.post.created_by && (
+              <Popover>
+                <PopoverTrigger>
+                  <div className="absolute top-0 right-0">
+                    <Button size={'icon'} variant={'ghost'}>
+                      <DotsVerticalIcon />
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="p-2 w-52">
+                  <div className="flex flex-col">
+                    <Button
+                      onClick={remove}
+                      isLoading={removePostMutation.isLoading}
+                      disabled={removePostMutation.isLoading}
+                      variant={'ghost'}
+                      className="justify-start"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             <div className="flex flex-wrap gap-1">
               {props.post.topics?.map(topic => (
                 <TopicCard key={topic.id} topic={topic} isSubscribed={isSubscribed(topic.id)} />

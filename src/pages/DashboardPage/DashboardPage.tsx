@@ -13,16 +13,25 @@ import { Skeleton } from '../../components/ui/skeleton';
 import Empty from '../../components/Empty';
 import SharedDialog from './SharedDialog';
 import MAvatar from '../../components/shared/MAvatar';
+import TopicSelection from './TopicSelection';
 
 export default function DashboardPage() {
   const dashboardContext = useSelector((state: RootState) => state.app.dashboardContext);
-  const { getPostMutation, posts, getPostsQuery } = usePosts();
+  const { getPostMutation, posts, getPostsQuery, setQuery } = usePosts();
   const refetchPostAt = async (postId: string) => {
     const res = await getPostMutation.mutateAsync(postId);
     const updatedPost = res.data.data;
     const index = posts?.findIndex(post => post.id === updatedPost.id);
     if (posts?.length && index !== undefined) {
       posts[index] = updatedPost;
+    }
+  };
+
+  const onTopicSelectedChange = (topicId?: string | null) => {
+    if (topicId) {
+      setQuery(prev => ({ ...prev, topicIds: [topicId] }));
+    } else {
+      setQuery(prev => ({ ...prev, topicIds: [] }));
     }
   };
 
@@ -57,6 +66,7 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <ContextSelect />
       </div>
+      <TopicSelection onSelectedChange={onTopicSelectedChange} />
       {getPostsQuery.isLoading ? (
         <div className="flex flex-col gap-4">
           {Array(5)

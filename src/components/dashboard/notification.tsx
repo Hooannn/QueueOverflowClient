@@ -38,7 +38,9 @@ export function NotificationBell() {
       tooltip: 'Go to notifications setting',
       icon: <Settings size={18} />,
       loading: false,
-      handler: () => {},
+      handler: () => {
+        navigate('settings/notifications');
+      },
     },
     {
       tooltip: 'Delete all notifications',

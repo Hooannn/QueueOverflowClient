@@ -1,0 +1,20 @@
+/* chrome and chromium based */
+.react-horizontal-scrolling-menu--scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.react-horizontal-scrolling-menu--scroll-container {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.react-horizontal-scrolling-menu--arrow-left,
+.react-horizontal-scrolling-menu--arrow-right {
+    align-items: center;
+}
+
+.react-horizontal-scrolling-menu--inner-wrapper {
+    align-items: center;
+}

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { onError } from '../../utils/error-handlers';
 import { IResponseData } from '../../types';
 import useAxiosIns from '../../hooks/useAxiosIns';
@@ -77,13 +77,18 @@ export interface GetQuery {
   relations?: string[];
 }
 
+export interface GetPostQuery extends GetQuery {
+  topicIds?: string[];
+}
+
 const usePosts = (enabledAutoFetch = true) => {
   const axios = useAxiosIns();
 
-  const [query, setQuery] = useState<GetQuery>({
+  const [query, setQuery] = useState<GetPostQuery>({
     offset: 0,
     limit: 20,
     relations: ['votes', 'comments', 'creator', 'topics'],
+    topicIds: [],
   });
 
   const getPostsQuery = useQuery({
@@ -123,6 +128,19 @@ const usePosts = (enabledAutoFetch = true) => {
     },
   });
 
+  const queryClient = useQueryClient();
+  const removePostMutation = useMutation({
+    mutationFn: (postId: string) => axios.delete<IResponseData<any>>(`/v1/posts/${postId}`),
+    onError,
+    onSuccess: res => {
+      queryClient.invalidateQueries('fetch/posts');
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Created successfully!',
+      });
+    },
+  });
+
   return {
     getPostsQuery,
     setQuery,
@@ -131,6 +149,7 @@ const usePosts = (enabledAutoFetch = true) => {
     getPostMutation,
     createPostMutation,
     posts,
+    removePostMutation,
   };
 };
 

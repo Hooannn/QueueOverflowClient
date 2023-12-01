@@ -60,6 +60,7 @@
     "react-day-picker": "^8.8.2",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.46.2",
+    "react-horizontal-scrolling-menu": "^4.1.1",
     "react-i18next": "12.1.1",
     "react-query": "^3.39.3",
     "react-quill": "^2.0.0",

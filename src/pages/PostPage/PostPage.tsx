@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import useAxiosIns from '../../hooks/useAxiosIns';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IResponseData } from '../../types';
 import { Post, VoteType } from '../../services/posts';
 import Loading from '../../components/Loading';
@@ -11,7 +11,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../@core/store';
 import SharedDialog from '../DashboardPage/SharedDialog';
 import { Skeleton } from '../../components/ui/skeleton';
-import Empty from '../../components/Empty';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { InfoIcon, Terminal } from 'lucide-react';
 
 export default function PostPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -34,10 +35,15 @@ export default function PostPage() {
       return prev;
     }, 0);
 
+  const [searchParams] = useSearchParams();
+  const isPublished = searchParams.get('publish');
+
+  const endpoint = isPublished === 'true' ? `/v1/posts/${params.id}/published` : `/v1/posts/${params.id}/reviewing`;
+
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['fetch/post', params.id],
     refetchOnWindowFocus: false,
-    queryFn: () => axios.get<IResponseData<Post>>(`/v1/posts/${params.id}`),
+    queryFn: () => axios.get<IResponseData<Post>>(endpoint),
     onSuccess: res => {
       if (!socket) {
         const newSocket = io(`${import.meta.env.VITE_SOCKET_ENDPOINT}posts`);
@@ -88,52 +94,61 @@ export default function PostPage() {
           <Loading />
         </div>
       ) : (
-        <div className="flex gap-4">
-          <SharedDialog shareUrl={shareUrl} title={shareTitle} onOpenChange={val => setShowSharedDialog(val)} isOpen={shouldShowSharedDialog} />
-          <PostCard
-            isPreview={false}
-            refetchPostAt={(postId: string) => {
-              if (postId === post.id) refetch();
-            }}
-            post={post}
-            showSharedDialog={(postId, postTitle) => {
-              showShareDialog(postId, postTitle);
-            }}
-          />
-          <div className="flex flex-col">
-            <h3 className="text-lg font-medium">Related</h3>
-            <div className="mt-2"></div>
-            {getRelatedPostsQuery.isLoading ? (
-              <div className="flex flex-col gap-2">
-                {Array(5)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Skeleton key={`Skeleton::${i}`} className="w-full h-10 rounded" />
-                  ))}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1">
-                {relatedPosts && relatedPosts!.length > 0 ? (
-                  <>
-                    {relatedPosts?.map(relatedPost => (
-                      <div key={relatedPost.id} className="flex items-center gap-2">
-                        <div className="text-xs font-bold px-3 py-1 bg-emerald-50 rounded-lg text-black">{votePoints(relatedPost)}</div>
-                        <div
-                          onClick={e => {
-                            navigate(`/post/${relatedPost.id}`);
-                          }}
-                          className="transition cursor-pointer underline text-sky-600 hover:text-sky-800 visited:text-purple-600 text-sm"
-                        >
-                          {relatedPost.title}
-                        </div>
-                      </div>
+        <div className="flex flex-col gap-4">
+          {!post.publish && (
+            <Alert variant={'destructive'}>
+              <InfoIcon className="h-4 w-4" />
+              <AlertTitle>This post is under reviewing!</AlertTitle>
+              <AlertDescription>You can update your post and resubmit again.</AlertDescription>
+            </Alert>
+          )}
+          <div className="flex gap-4">
+            <SharedDialog shareUrl={shareUrl} title={shareTitle} onOpenChange={val => setShowSharedDialog(val)} isOpen={shouldShowSharedDialog} />
+            <PostCard
+              isPreview={false}
+              refetchPostAt={(postId: string) => {
+                if (postId === post.id) refetch();
+              }}
+              post={post}
+              showSharedDialog={(postId, postTitle) => {
+                showShareDialog(postId, postTitle);
+              }}
+            />
+            <div className="flex flex-col">
+              <h3 className="text-lg font-medium">Related</h3>
+              <div className="mt-2"></div>
+              {getRelatedPostsQuery.isLoading ? (
+                <div className="flex flex-col gap-2 w-[250px]">
+                  {Array(5)
+                    .fill(0)
+                    .map((_, i) => (
+                      <Skeleton key={`Skeleton::${i}`} className="w-full h-10 rounded" />
                     ))}
-                  </>
-                ) : (
-                  <Empty />
-                )}
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {relatedPosts && relatedPosts!.length > 0 ? (
+                    <>
+                      {relatedPosts?.map(relatedPost => (
+                        <div key={relatedPost.id} className="flex items-center gap-2">
+                          <div className="text-xs font-bold px-3 py-1 bg-emerald-50 rounded-lg text-black">{votePoints(relatedPost)}</div>
+                          <div
+                            onClick={e => {
+                              navigate(`/post/${relatedPost.id}?publish=true`);
+                            }}
+                            className="transition cursor-pointer underline text-sky-600 hover:text-sky-800 visited:text-purple-600 text-sm"
+                          >
+                            {relatedPost.title}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <span className="text-xs">No data.</span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

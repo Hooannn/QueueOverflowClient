@@ -29,6 +29,15 @@ import useSavedPosts from '../../services/saved_posts';
 import usePostSubscriptions from '../../services/post_subscriptions';
 import CommentCard from './CommentCard';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
+import DeleteDialog from '../../components/shared/DeleteDialog';
 export default function PostCard(props: {
   showSharedDialog: (postId: string, postTitle: string) => void;
   isPreview: boolean;
@@ -85,7 +94,15 @@ export default function PostCard(props: {
 
   const goToPost = () => {
     if (!props.isPreview) return;
-    navigate(`/post/${props.post.id}`);
+    if (props.post.publish) {
+      navigate(`/post/${props.post.id}?publish=true`);
+    } else {
+      navigate(`/post/${props.post.id}?publish=false`);
+    }
+  };
+
+  const goToUpdate = () => {
+    navigate(`/submit?post_id=${props.post.id}`);
   };
 
   const isLoading = upvoteMutation.isLoading || downvoteMutation.isLoading;
@@ -100,8 +117,15 @@ export default function PostCard(props: {
     [props.post],
   );
 
-  const remove = () => {
-    removePostMutation.mutateAsync(props.post.id);
+  const queryClient = useQueryClient();
+
+  const remove = async () => {
+    removePostMutation.mutateAsync(props.post.id).then(() => {
+      setShowDeleteDialog(false);
+      queryClient.invalidateQueries({
+        queryKey: ['fetch/posts'],
+      });
+    });
   };
 
   const ACTIONS =
@@ -173,124 +197,149 @@ export default function PostCard(props: {
     }
   }, []);
 
+  const [shouldShowDeleteDialog, setShowDeleteDialog] = useState(false);
+
   return (
-    <Card onClick={goToPost} className={`rounded transition ${props.isPreview ? 'hover:border-2 hover:border-solid hover:border-sky-200' : ''}`}>
-      <div className="flex">
-        <div className="flex flex-col gap-1 justify-start pt-6 items-center pl-6 relative">
-          {isLoading && (
-            <div className="absolute top-0 left-0 h-full w-full bg-white opacity-70 z-50 transition-opacity duration-300 ease-in-out flex items-center justify-center">
-              <Icons.spinner className="h-4 w-4 animate-spin" />
-            </div>
-          )}
-          <ChevronUpCircle
-            onClick={e => {
-              e.stopPropagation();
-              upvote();
-            }}
-            size={28}
-            className={`${vote && vote.type === VoteType.Up ? 'text-red-400' : ''} rounded-full hover:text-red-400 cursor-pointer transition`}
-          />
-          <div className="text-center">{votePoints}</div>
-          <ChevronDownCircle
-            onClick={e => {
-              e.stopPropagation();
-              downvote();
-            }}
-            size={28}
-            className={`${vote && vote.type === VoteType.Down ? 'text-red-400' : ''} rounded-full hover:text-red-400 cursor-pointer transition`}
-          />
-        </div>
-        <div className="w-full">
-          <CardHeader className="relative">
-            {user?.id === props.post.created_by && (
-              <Popover>
-                <PopoverTrigger>
-                  <div className="absolute top-0 right-0">
-                    <Button size={'icon'} variant={'ghost'}>
-                      <DotsVerticalIcon />
-                    </Button>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="p-2 w-52">
-                  <div className="flex flex-col">
-                    <Button
-                      onClick={remove}
-                      isLoading={removePostMutation.isLoading}
-                      disabled={removePostMutation.isLoading}
-                      variant={'ghost'}
-                      className="justify-start"
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            <div className="flex flex-wrap gap-1">
-              {props.post.topics?.map(topic => (
-                <TopicCard key={topic.id} topic={topic} isSubscribed={isSubscribed(topic.id)} />
-              ))}
-            </div>
-            <CardDescription>
-              Posted by <CreatorCard creator={props.post.creator} />{' '}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>{dayjs(props.post.created_at).fromNow()}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>{dayjs(props.post.created_at).toDate().toUTCString()}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>{' '}
-            </CardDescription>
-            <CardTitle>{props.post.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="relative post-card">
-            <ReactQuill
-              ref={quillRef}
-              className={`p-0 ${props.isPreview ? 'max-h-[250px]' : ''} overflow-hidden`}
-              value={props.post.content}
-              formats={['header', 'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block', 'list', 'bullet', 'indent', 'link', 'image']}
-              readOnly={true}
-              theme={'snow'}
-              modules={{ toolbar: false }}
-            ></ReactQuill>
-            {props.isPreview && contentHeight && contentHeight >= 250 && (
-              <div className="absolute w-full p-6 left-0 bottom-0">
-                <div className={`w-full h-12 ${raw === 'dark' ? 'overlay-dark' : 'overlay-light'}`}></div>
+    <>
+      <DeleteDialog
+        open={shouldShowDeleteDialog}
+        isLoading={removePostMutation.isLoading}
+        onOpenChange={v => {
+          setShowDeleteDialog(v);
+        }}
+        onConfirm={remove}
+      />
+      <Card onClick={goToPost} className={`rounded transition ${props.isPreview ? 'hover:border-2 hover:border-solid hover:border-sky-200' : ''}`}>
+        <div className="flex">
+          <div className="flex flex-col gap-1 justify-start pt-6 items-center pl-6 relative">
+            {isLoading && (
+              <div className="absolute top-0 left-0 h-full w-full bg-white opacity-70 z-50 transition-opacity duration-300 ease-in-out flex items-center justify-center">
+                <Icons.spinner className="h-4 w-4 animate-spin" />
               </div>
             )}
-          </CardContent>
-          <CardFooter className="flex gap-2">
-            {ACTIONS.map(action => (
-              <TooltipProvider key={action.title}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={(action.buttonVariant as any) ?? 'secondary'}
-                      isLoading={action.isLoading ?? false}
-                      onClick={e => {
-                        e.stopPropagation();
-                        action.action();
-                      }}
-                    >
-                      {action.icon}
-                      {action.title}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{action.tooltip}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ))}
-          </CardFooter>
-
-          {!props.isPreview && (
-            <CardContent>
-              <CommentSection postId={props.post.id} creator={props.post.creator} comments={props.post.comments} />
+            <ChevronUpCircle
+              onClick={e => {
+                e.stopPropagation();
+                upvote();
+              }}
+              size={28}
+              className={`${vote && vote.type === VoteType.Up ? 'text-red-400' : ''} rounded-full hover:text-red-400 cursor-pointer transition`}
+            />
+            <div className="text-center">{votePoints}</div>
+            <ChevronDownCircle
+              onClick={e => {
+                e.stopPropagation();
+                downvote();
+              }}
+              size={28}
+              className={`${vote && vote.type === VoteType.Down ? 'text-red-400' : ''} rounded-full hover:text-red-400 cursor-pointer transition`}
+            />
+          </div>
+          <div className="w-full">
+            <CardHeader className="relative">
+              {user?.id === props.post.created_by && (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="absolute top-0 right-0">
+                      <Button
+                        onClick={e => {
+                          e.stopPropagation();
+                        }}
+                        size={'icon'}
+                        variant={'ghost'}
+                      >
+                        <DotsVerticalIcon />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem>Report</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={e => {
+                          e.stopPropagation();
+                          goToUpdate();
+                        }}
+                      >
+                        Update
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={e => {
+                          e.stopPropagation();
+                          setShowDeleteDialog(true);
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+              <div className="flex flex-wrap gap-1">
+                {props.post.topics?.map(topic => (
+                  <TopicCard key={topic.id} topic={topic} isSubscribed={isSubscribed(topic.id)} />
+                ))}
+              </div>
+              <CardDescription>
+                Posted by <CreatorCard creator={props.post.creator} />{' '}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>{dayjs(props.post.created_at).fromNow()}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>{dayjs(props.post.created_at).toDate().toUTCString()}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>{' '}
+              </CardDescription>
+              <CardTitle>{props.post.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="relative post-card">
+              <ReactQuill
+                ref={quillRef}
+                className={`p-0 ${props.isPreview ? 'max-h-[250px]' : ''} overflow-hidden`}
+                value={props.post.content}
+                formats={['header', 'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block', 'list', 'bullet', 'indent', 'link', 'image']}
+                readOnly={true}
+                theme={'snow'}
+                modules={{ toolbar: false }}
+              ></ReactQuill>
+              {props.isPreview && contentHeight && contentHeight >= 250 && (
+                <div className="absolute w-full p-6 left-0 bottom-0">
+                  <div className={`w-full h-12 ${raw === 'dark' ? 'overlay-dark' : 'overlay-light'}`}></div>
+                </div>
+              )}
             </CardContent>
-          )}
+            <CardFooter className="flex gap-2">
+              {ACTIONS.map(action => (
+                <TooltipProvider key={action.title}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={(action.buttonVariant as any) ?? 'secondary'}
+                        isLoading={action.isLoading ?? false}
+                        onClick={e => {
+                          e.stopPropagation();
+                          action.action();
+                        }}
+                      >
+                        {action.icon}
+                        {action.title}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{action.tooltip}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </CardFooter>
+
+            {!props.isPreview && (
+              <CardContent>
+                <CommentSection postId={props.post.id} creator={props.post.creator} comments={props.post.comments} />
+              </CardContent>
+            )}
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </>
   );
 }
 

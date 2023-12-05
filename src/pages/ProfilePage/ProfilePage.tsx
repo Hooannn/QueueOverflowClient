@@ -16,6 +16,7 @@ import useAxiosIns from '../../hooks/useAxiosIns';
 import { IResponseData, IUser } from '../../types';
 import Loading from '../../components/Loading';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import ProfileReviewing from './ProfileReviewing';
 
 export default function ProfilePage() {
   const axios = useAxiosIns();
@@ -92,9 +93,13 @@ export default function ProfilePage() {
                   <TabsTrigger value="saved">Saved</TabsTrigger>
                   <TabsTrigger value="upvoted">Upvoted</TabsTrigger>
                   <TabsTrigger value="downvoted">Downvoted</TabsTrigger>
+                  <TabsTrigger value="reviewing">Reviewing</TabsTrigger>
                 </>
               )}
             </TabsList>
+            <TabsContent className="self-start w-full" value="reviewing">
+              <ProfileReviewing />
+            </TabsContent>
             <TabsContent className="self-start w-full" value="posts">
               <ProfilePosts />
             </TabsContent>

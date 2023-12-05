@@ -69,6 +69,7 @@ export interface Post {
   comments: Comment[];
   creator: Creator;
   topics: Topic[];
+  type: PostType;
 }
 
 export interface GetQuery {
@@ -128,6 +129,21 @@ const usePosts = (enabledAutoFetch = true) => {
     },
   });
 
+  const updatePostMutation = useMutation({
+    mutationFn: (params: { postId?: string; title: string; type: PostType; content: string; topics?: { id: string }[] }) => {
+      const endpoint = `/v1/posts/${params.postId}`;
+      delete params.postId;
+      return axios.patch<IResponseData<Post>>(endpoint, params);
+    },
+    onError,
+    onSuccess: res => {
+      toast({
+        title: 'Success',
+        description: res.data.message ?? 'Updated successfully!',
+      });
+    },
+  });
+
   const queryClient = useQueryClient();
   const removePostMutation = useMutation({
     mutationFn: (postId: string) => axios.delete<IResponseData<any>>(`/v1/posts/${postId}`),
@@ -150,6 +166,7 @@ const usePosts = (enabledAutoFetch = true) => {
     createPostMutation,
     posts,
     removePostMutation,
+    updatePostMutation,
   };
 };
 

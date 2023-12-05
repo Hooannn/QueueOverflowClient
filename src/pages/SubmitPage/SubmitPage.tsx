@@ -1,7 +1,8 @@
+import { ForwardedRef, forwardRef, useImperativeHandle } from 'react';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Label } from '../../components/ui/label';
 import { CheckIcon, CrossCircledIcon, ImageIcon, ListBulletIcon, PlusIcon, ReaderIcon } from '@radix-ui/react-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -9,7 +10,7 @@ import { Button } from '../../components/ui/button';
 import PostEditor from './PostEditor';
 import MediaEditor from './MediaEditor';
 import PollEditor from './PollEditor';
-import usePosts, { PostType, Topic } from '../../services/posts';
+import usePosts, { Post, PostType, Topic } from '../../services/posts';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import useTopics from '../../services/topics';
 import { Skeleton } from '../../components/ui/skeleton';
@@ -19,16 +20,22 @@ import { Icons } from '../../components/icons';
 import Empty from '../../components/Empty';
 import { uniqueId } from 'lodash';
 import { onError } from '../../utils/error-handlers';
+import { useQuery } from 'react-query';
+import useAxiosIns from '../../hooks/useAxiosIns';
+import { IResponseData } from '../../types';
+import Loading from '../../components/Loading';
 
 let typingTimeout: NodeJS.Timeout | null = null;
 export default function SubmitPage() {
+  const axios = useAxiosIns();
+  const topicSelectionRef = useRef<TopicSelectiontRef>(null);
   const [postType, setPostType] = useState<PostType>(PostType.Post);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [postValue, setPostValue] = useState<string>('');
   const [postTitle, setPostTitle] = useState<string>('');
   const [postContentLength, setPostContentLength] = useState(0);
-  const [postTopics, setPostTopics] = useState<{ id: string }[]>([]);
-  const { createPostMutation } = usePosts(false);
+  const [postTopics, setPostTopics] = useState<Topic[]>([]);
+  const { createPostMutation, updatePostMutation } = usePosts(false);
   const [rerenderKey, setRerenderKey] = useState<string>(uniqueId());
   const EDITORS = [
     {
@@ -47,7 +54,9 @@ export default function SubmitPage() {
     },
   ];
 
-  const editor = useMemo(() => EDITORS.find(e => e.type === postType), [postType]);
+  const [updatedPostId, setUpdatedPostId] = useState<string | null>(null);
+
+  const editor = EDITORS.find(e => e.type === postType);
 
   useEffect(() => {
     const isMedia = searchParams.get('media');
@@ -55,7 +64,28 @@ export default function SubmitPage() {
 
     const isPoll = searchParams.get('poll');
     if (isPoll) setPostType(PostType.Poll);
+
+    const updatedPostId = searchParams.get('post_id');
+    if (updatedPostId) setUpdatedPostId(updatedPostId);
+    else setUpdatedPostId(null);
   }, [searchParams]);
+
+  const getPostQuery = useQuery({
+    queryKey: ['fetch/updatedPost', updatedPostId],
+    refetchOnWindowFocus: false,
+    queryFn: () => {
+      if (updatedPostId) return axios.get<IResponseData<Post>>(`/v1/posts/${updatedPostId}/reviewing`);
+    },
+    onSuccess: data => {
+      const updatedPost = data?.data.data;
+      if (updatedPost) {
+        setPostType(updatedPost.type);
+        setPostTitle(updatedPost.title);
+        setPostValue(updatedPost.content);
+        if (updatedPost.topics.length) topicSelectionRef.current?.setDefaultSelectedTopics(updatedPost.topics);
+      }
+    },
+  });
 
   const submit = () => {
     const keysToCheck: ('title' | 'type')[] = ['title', 'type'];
@@ -63,7 +93,7 @@ export default function SubmitPage() {
       title: postTitle,
       content: postValue,
       type: postType,
-      topics: postTopics ?? [],
+      topics: postTopics.map(({ id }) => ({ id })) ?? [],
     };
     let isValid = true;
     keysToCheck.forEach(key => {
@@ -87,37 +117,94 @@ export default function SubmitPage() {
       setRerenderKey(uniqueId());
     });
   };
+
+  const update = () => {
+    const keysToCheck: ('title' | 'type')[] = ['title', 'type'];
+    const submitParams = {
+      title: postTitle,
+      content: postValue,
+      type: postType,
+      topics: postTopics.map(({ id }) => ({ id })) ?? [],
+    };
+    let isValid = true;
+    keysToCheck.forEach(key => {
+      if (!submitParams[key] || !(submitParams[key]?.trim()?.length > 0)) {
+        onError({ message: `Please fill out the ${key}`, name: 'Error' });
+        isValid = false;
+      }
+    });
+
+    if (postContentLength == 0) {
+      onError({ message: `Please fill out the content`, name: 'Error' });
+      isValid = false;
+    }
+
+    if (!isValid) return;
+    if (updatedPostId)
+      updatePostMutation.mutateAsync({ ...submitParams, postId: updatedPostId }).then(() => {
+        setPostTitle('');
+        setPostValue('');
+        setPostTopics([]);
+        setRerenderKey(uniqueId());
+        searchParams.delete('post_id');
+        setSearchParams(searchParams);
+      });
+  };
+
   return (
-    <div className="flex-1 space-y-4 p-4">
-      <div className="flex items-center justify-between space-y-2 z-200">
-        <h2 className="text-3xl font-bold tracking-tight">Create a post</h2>
+    <>
+      <div className="flex-1 space-y-4 p-4">
+        <div className="flex items-center justify-between space-y-2 z-200">
+          <h2 className="text-3xl font-bold tracking-tight">{updatedPostId ? 'Update a post' : 'Create a post'}</h2>
+        </div>
+        <Card className="rounded relative" key={rerenderKey}>
+          {(createPostMutation.isLoading || getPostQuery.isLoading) && (
+            <div className="absolute top-0 left-0 w-full h-full opacity-50 z-999 transition-opacity duration-300 ease-in-out flex items-center justify-center">
+              <Icons.spinner className="h-16 w-16 animate-spin" />
+            </div>
+          )}
+          <CardContent className="p-4 flex flex-col gap-4">
+            <PostTypeSelection value={postType} onValueChange={(value: PostType) => setPostType(value)} />
+            <TopicSelection ref={topicSelectionRef} onValueChange={value => setPostTopics(value)} />
+            <Input value={postTitle} onChange={e => setPostTitle(e.target.value)} placeholder="Title" className="w-full h-12" />
+            {editor?.value}
+            <div className="flex items-center justify-end">
+              {updatedPostId ? (
+                <Button isLoading={updatePostMutation.isLoading} disabled={updatePostMutation.isLoading} onClick={update} size={'lg'}>
+                  Update
+                </Button>
+              ) : (
+                <Button isLoading={createPostMutation.isLoading} disabled={createPostMutation.isLoading} onClick={submit} size={'lg'}>
+                  Post
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      <Card className="rounded relative" key={rerenderKey}>
-        {createPostMutation.isLoading && (
-          <div className="absolute top-0 left-0 w-full h-full opacity-50 z-999 transition-opacity duration-300 ease-in-out flex items-center justify-center">
-            <Icons.spinner className="h-16 w-16 animate-spin" />
-          </div>
-        )}
-        <CardContent className="p-4 flex flex-col gap-4">
-          <PostTypeSelection value={postType} onValueChange={(value: PostType) => setPostType(value)} />
-          <TopicSelection onValueChange={value => setPostTopics(value)} />
-          <Input value={postTitle} onChange={e => setPostTitle(e.target.value)} placeholder="Title" className="w-full h-12" />
-          {editor?.value}
-          <div className="flex items-center justify-end">
-            <Button isLoading={createPostMutation.isLoading} disabled={createPostMutation.isLoading} onClick={submit} size={'lg'}>
-              Post
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </>
   );
 }
 
-export function TopicSelection({ onValueChange }: { onValueChange: (topics: { id: string }[]) => void }) {
+interface TopicSelectionProps {
+  onValueChange: (topics: Topic[]) => void;
+}
+
+interface TopicSelectiontRef {
+  setDefaultSelectedTopics: (topics: Topic[]) => void;
+}
+
+const TopicSelection = forwardRef(({ onValueChange }: TopicSelectionProps, ref: ForwardedRef<TopicSelectiontRef>) => {
   const [selectedTopics, setSelectedTopics] = useState<Topic[]>([]);
   const [shouldOpenDialog, setOpenDialog] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    setDefaultSelectedTopics: topics => {
+      setSelectedTopics(topics);
+    },
+  }));
+
   const { isLoading, pages, fetchNextPage, isFetchingNextPage, setSearchString, searchString, isSearching, isSearchLoading } = useTopics();
   const addTopic = (topic: Topic) => {
     if (selectedTopics.some(sTopic => sTopic.id === topic.id)) return;
@@ -156,15 +243,11 @@ export function TopicSelection({ onValueChange }: { onValueChange: (topics: { id
   };
 
   useEffect(() => {
-    onValueChange(
-      selectedTopics.map(topic => ({
-        id: topic.id,
-      })),
-    );
+    onValueChange(selectedTopics);
   }, [selectedTopics]);
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div ref={ref as any} className="flex flex-wrap gap-2">
       {selectedTopics.map(topic => (
         <Button onClick={() => topicClicked(topic)} className="relative" size={'sm'} variant={'outline'} key={topic.id}>
           {topic.title}
@@ -259,7 +342,7 @@ export function TopicSelection({ onValueChange }: { onValueChange: (topics: { id
       </Dialog>
     </div>
   );
-}
+});
 
 export function PostTypeSelection({ value, onValueChange }: { value: PostType; onValueChange: (value: PostType) => void }) {
   const POST_TYPES = [

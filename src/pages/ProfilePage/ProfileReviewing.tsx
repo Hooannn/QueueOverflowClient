@@ -62,17 +62,20 @@ export default function ProfileReviewing() {
           </div>
         ) : (
           <>
-            {posts?.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {posts?.map(post => (
-                  <PostCard isPreview showSharedDialog={showShareDialog} key={post.id} post={post} refetchPostAt={refetchPostAt} />
-                ))}
-              </div>
-            ) : (
-              <>
-                <Empty text="No posts data." />
-              </>
-            )}
+            {
+              //@ts-ignore
+              posts?.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  {posts?.map(post => (
+                    <PostCard isPreview showSharedDialog={showShareDialog} key={post.id} post={post} refetchPostAt={refetchPostAt} />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <Empty text="No posts data." />
+                </>
+              )
+            }
           </>
         )}
       </div>

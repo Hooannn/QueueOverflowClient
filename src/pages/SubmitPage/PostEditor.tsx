@@ -12,6 +12,7 @@ interface PostEditorProps {
 const PostEditor = forwardRef(({ onValueLengthChange, onValueChange, value }: PostEditorProps, ref: ForwardedRef<any>) => {
   const quillRef = useRef<ReactQuill>(null);
   const updateValueLength = () => {
+    //@ts-ignore
     const innerText = quillRef?.current?.editingArea?.innerText;
     const replaceBreak = (innerText as string).replace('\n', '');
     const length = replaceBreak.trim().length;

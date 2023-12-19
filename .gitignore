@@ -3,7 +3,7 @@ logs
 *.log
 yarn.lock
 .env
-.env.production
+#.env.production
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

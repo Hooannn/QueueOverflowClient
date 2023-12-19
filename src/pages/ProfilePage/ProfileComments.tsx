@@ -36,17 +36,20 @@ export default function ProfileComments() {
           </div>
         ) : (
           <>
-            {comments?.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {comments?.map(comment => (
-                  <CommentCard isPreview key={comment.id} comment={comment} postId={comment.post_id} />
-                ))}
-              </div>
-            ) : (
-              <>
-                <Empty text="No comments data." />
-              </>
-            )}
+            {
+              //@ts-ignore
+              comments?.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  {comments?.map(comment => (
+                    <CommentCard isPreview key={comment.id} comment={comment} postId={comment.post_id} />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <Empty text="No comments data." />
+                </>
+              )
+            }
           </>
         )}
       </div>

@@ -289,35 +289,38 @@ const TopicSelection = forwardRef(({ onValueChange }: TopicSelectionProps, ref: 
                   <div className="flex flex-col gap-2">
                     {pages.map((group, i) => (
                       <>
-                        {group?.data?.data?.length > 0 ? (
-                          <React.Fragment key={i}>
-                            {group?.data?.data?.map(topic => (
-                              <Card
-                                onClick={() => {
-                                  if (isSelected(topic.id)) {
-                                    removeTopic(topic);
-                                  } else {
-                                    addTopic(topic);
-                                  }
-                                }}
-                                key={topic.id}
-                                className="p-0 rounded cursor-pointer transition hover:scale-[0.99]"
-                              >
-                                <CardHeader className="p-4">
-                                  <div className="flex gap-2 items-center justify-between">
-                                    <div>
-                                      <CardTitle>{topic.title}</CardTitle>
-                                      <CardDescription>{topic.description ?? 'No description provided.'}</CardDescription>
+                        {
+                          //@ts-ignore
+                          group?.data?.data?.length > 0 ? (
+                            <React.Fragment key={i}>
+                              {group?.data?.data?.map(topic => (
+                                <Card
+                                  onClick={() => {
+                                    if (isSelected(topic.id)) {
+                                      removeTopic(topic);
+                                    } else {
+                                      addTopic(topic);
+                                    }
+                                  }}
+                                  key={topic.id}
+                                  className="p-0 rounded cursor-pointer transition hover:scale-[0.99]"
+                                >
+                                  <CardHeader className="p-4">
+                                    <div className="flex gap-2 items-center justify-between">
+                                      <div>
+                                        <CardTitle>{topic.title}</CardTitle>
+                                        <CardDescription>{topic.description ?? 'No description provided.'}</CardDescription>
+                                      </div>
+                                      {isSelected(topic.id) && <CheckIcon className="w-4 h-4" />}
                                     </div>
-                                    {isSelected(topic.id) && <CheckIcon className="w-4 h-4" />}
-                                  </div>
-                                </CardHeader>
-                              </Card>
-                            ))}
-                          </React.Fragment>
-                        ) : (
-                          <Empty />
-                        )}
+                                  </CardHeader>
+                                </Card>
+                              ))}
+                            </React.Fragment>
+                          ) : (
+                            <Empty />
+                          )
+                        }
                       </>
                     ))}
                     {isFetchingNextPage && (
